@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 export function HeroSection() {
   return (
-    <section className="py-20 md:py-32 text-center bg-gradient-to-b from-background to-secondary/30">
+    <section className="py-20 md:py-32 text-center bg-gradient-to-t from-secondary/30 to-background">
       <div className="container mx-auto px-4">
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-6">
           Take Control of Your Finances, <span className="text-primary">Effortlessly</span>.
@@ -56,3 +56,4 @@ export function HeroSection() {
     </section>
   );
 }
+

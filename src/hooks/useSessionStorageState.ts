@@ -28,15 +28,18 @@ export function useSessionStorageState<T>(
     (value) => {
       if (!isBrowser) return;
       try {
-        const valueToStore =
-          value instanceof Function ? value(storedValue) : value;
-        setStoredValue(valueToStore);
-        window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
+        // Use functional update with setStoredValue to avoid depending on storedValue in useCallback
+        setStoredValue(prevStoredValue => {
+          const valueToStore =
+            value instanceof Function ? value(prevStoredValue) : value;
+          window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
+          return valueToStore;
+        });
       } catch (error) {
         console.error(`Error setting sessionStorage key "${key}":`, error);
       }
     },
-    [key, storedValue]
+    [key] // Now only depends on key, making setValue stable
   );
   
   // Listen for changes from other tabs/windows (optional, good practice)
@@ -63,3 +66,4 @@ export function useSessionStorageState<T>(
 
   return [storedValue, setValue];
 }
+

@@ -69,11 +69,14 @@ export function Chatbot() {
                 <p className="text-sm">
                   E.g., "Can I afford a new car?" or "Summarize my investments."
                 </p>
-                {isChatDisabledByUserDetails && (
-                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
-                    (Complete your user profile to enable chat)
-                  </p>
-                )}
+                {/* Reserve space for the conditional message to stabilize layout */}
+                <div className="h-6 mt-2"> {/* Approx height of a 'text-sm' line + 'mt-2' */}
+                  {isChatDisabledByUserDetails && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400">
+                      (Complete your user profile to enable chat)
+                    </p>
+                  )}
+                </div>
               </div>
             )}
             {messages.map((msg) => (
@@ -115,3 +118,4 @@ export function Chatbot() {
     </Card>
   );
 }
+

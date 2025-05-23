@@ -26,12 +26,14 @@ export function Chatbot() {
   useEffect(() => {
     const scrollEl = viewportRef.current;
     if (scrollEl) {
-      // Defer scroll to after the current render cycle to allow layout to stabilize
-      const timerId = setTimeout(() => {
+      let animationFrameId: number;
+      const doScroll = () => {
         scrollEl.scrollTop = scrollEl.scrollHeight;
-      }, 0);
-      // Cleanup the timeout if messages change again before it fires
-      return () => clearTimeout(timerId);
+      };
+      // Defer scroll to the next animation frame
+      animationFrameId = requestAnimationFrame(doScroll);
+      // Cleanup the animation frame if messages change again before it fires
+      return () => cancelAnimationFrame(animationFrameId);
     }
   }, [messages]);
 

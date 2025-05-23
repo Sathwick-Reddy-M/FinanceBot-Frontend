@@ -208,7 +208,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
 
   const getDefaultValues = (account?: Account): Partial<AccountFormData> => {
     const base = {
-      id: '', // Initialize id for new accounts
+      id: '', 
       name: '',
       currency: 'USD',
       uninvested_amount: 0,
@@ -261,7 +261,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       const { balance, ...restOfAccountToEdit } = account; 
       return {
         ...base, 
-        id: account.id, // Set id if editing
+        id: account.id, 
         type: account.type, 
         ...restOfAccountToEdit, 
         annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0,
@@ -302,10 +302,9 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
 
   const prepareDataForSubmit = (data: AccountFormData): Account => {
     let calculatedBalance = 0;
-    // const accountId = accountToEdit?.id || crypto.randomUUID(); // Removed: ID comes from form data
     
     const baseData = { 
-        id: data.id, // Use ID from form
+        id: data.id, 
         name: data.name, 
         type: data.type, 
         currency: data.currency, 
@@ -315,13 +314,13 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
 
     switch (data.type) {
       case 'Investment':
-        calculatedBalance = data.uninvested_amount;
+        calculatedBalance = data.uninvested_amount; // Simplified: real balance would sum asset values + uninvested
         specificData = { uninvested_amount: data.uninvested_amount, asset_distribution: data.asset_distribution };
         break;
       case 'HSA':
       case 'Traditional IRA':
       case 'Roth IRA':
-        calculatedBalance = data.uninvested_amount;
+        calculatedBalance = data.uninvested_amount; // Simplified
         specificData = { 
             uninvested_amount: data.uninvested_amount, 
             asset_distribution: data.asset_distribution,
@@ -330,7 +329,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         break;
       case 'Retirement 401k':
       case 'Roth 401k':
-        calculatedBalance = data.uninvested_amount;
+        calculatedBalance = data.uninvested_amount; // Simplified
         specificData = { 
             uninvested_amount: data.uninvested_amount, 
             asset_distribution: data.asset_distribution,
@@ -382,7 +381,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         };
         break;
       case 'Payroll':
-        calculatedBalance = data.net_income;
+        calculatedBalance = data.net_income; // Balance might be more conceptual, using last net income
         specificData = {
             annual_income: data.annual_income,
             federal_taxes_withheld: data.federal_taxes_withheld,
@@ -418,8 +417,11 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         editAccount(finalAccountObject); 
         toast({ title: "Success", description: "Account updated successfully." });
       } else {
-        addAccount(finalAccountObject); 
-        toast({ title: "Success", description: "Account added successfully." });
+        const wasAdded = addAccount(finalAccountObject); 
+        if (wasAdded) {
+            toast({ title: "Success", description: "Account added successfully." });
+        }
+        // If wasAdded is false, the alert about duplicate ID is handled in AccountContext
       }
       onOpenChange(false);
       form.reset(getDefaultValues()); 

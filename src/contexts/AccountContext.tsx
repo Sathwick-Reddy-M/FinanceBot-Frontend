@@ -9,7 +9,7 @@ import { SESSION_STORAGE_ACCOUNTS_KEY } from '@/lib/constants';
 
 interface AccountContextType {
   accounts: Account[];
-  addAccount: (account: Account) => void; // Expects full Account object now
+  addAccount: (account: Account) => boolean; // Returns true if added, false if duplicate
   editAccount: (updatedAccount: Account) => void;
   deleteAccount: (accountId: string) => void;
   getAccountById: (accountId: string) => Account | undefined;
@@ -26,35 +26,32 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false); 
   }, []);
 
-  const addAccount = (account: Account) => {
+  const addAccount = (account: Account): boolean => {
     if (accounts.some(existingAccount => existingAccount.id === account.id)) {
       alert('Account with this ID already exists. Please use a unique ID.');
-      return;
+      return false; // Indicate failure due to duplicate ID
     }
-    // Account object from form submission should already have id and calculated balance
+    
     let accountToAdd = { ...account };
     
-    // Check if accountToAdd has 'asset_distribution' and if it's an array
-    // Use 'asset_distribution' (single 's') for consistency with types.ts
     if ('asset_distribution' in accountToAdd && Array.isArray((accountToAdd as any).asset_distribution)) {
       (accountToAdd as any).asset_distribution = (accountToAdd as any).asset_distribution.map((item: AssetDistribution) => ({
         ...item,
-        id: item.id || crypto.randomUUID(), // Ensure client-side ID for React keys
+        id: item.id || crypto.randomUUID(), 
       }));
-    } // Fixed: Added missing closing brace for the if statement
+    }
     setAccounts((prevAccounts) => [...prevAccounts, accountToAdd]);
+    return true; // Indicate success
   };
 
   const editAccount = (updatedAccount: Account) => {
     let accountToUpdate = { ...updatedAccount };
-    // Use 'asset_distribution' (single 's') for consistency with types.ts
     if ('asset_distribution' in accountToUpdate && Array.isArray((accountToUpdate as any).asset_distribution)) {
       (accountToUpdate as any).asset_distribution = (accountToUpdate as any).asset_distribution.map((item: AssetDistribution) => ({
         ...item,
         id: item.id || crypto.randomUUID(),
       }));
     }
-    // Similar for other arrays if needed
     setAccounts((prevAccounts) =>
       prevAccounts.map((acc) =>
         acc.id === accountToUpdate.id ? accountToUpdate : acc

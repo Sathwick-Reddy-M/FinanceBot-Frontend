@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/contexts/ChatContext';
-import { useUserDetails } from '@/contexts/UserDetailsContext'; // Added
+import { useUserDetails } from '@/contexts/UserDetailsContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,17 +15,23 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // Added
+} from "@/components/ui/tooltip";
 
 export function Chatbot() {
   const { messages, sendMessage, isSending, clearChat } = useChat();
-  const { userDetails, loading: userDetailsLoading } = useUserDetails(); // Added
+  const { userDetails, loading: userDetailsLoading } = useUserDetails();
   const [inputValue, setInputValue] = useState('');
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (viewportRef.current) {
-      viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
+    const scrollEl = viewportRef.current;
+    if (scrollEl) {
+      // Defer scroll to after the current render cycle to allow layout to stabilize
+      const timerId = setTimeout(() => {
+        scrollEl.scrollTop = scrollEl.scrollHeight;
+      }, 0);
+      // Cleanup the timeout if messages change again before it fires
+      return () => clearTimeout(timerId);
     }
   }, [messages]);
 

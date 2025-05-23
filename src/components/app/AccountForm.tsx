@@ -41,7 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 
 // Schema for Asset Distribution (aligns with Python's AssetDistribution)
 const assetDistributionSchema = z.object({
-  id: z.string().optional(), // Client-side UUID
+  id: z.string().optional(), // Client-side UUID for React keys
   ticker: z.string().min(1, "Ticker is required"),
   quantity: z.coerce.number().min(0, "Quantity must be non-negative"),
   average_cost_basis: z.coerce.number().min(0, "Average cost basis must be non-negative"),
@@ -58,7 +58,7 @@ const billingCycleTransactionSchema = z.object({
 const checkingOrSavingsAccountFeeSchema = z.object({
   no_minimum_balance_fee: z.coerce.number({ required_error: "No minimum balance fee is required" }),
   monthly_fee: z.coerce.number({ required_error: "Monthly fee is required" }),
-  atm_fee: z.coerce.number({ required_error: "ATM fee is required" }), // Python: ATM_fee
+  atm_fee: z.coerce.number({ required_error: "ATM fee is required" }),
   overdraft_fee: z.coerce.number({ required_error: "Overdraft fee is required" }),
 });
 
@@ -73,11 +73,10 @@ const loanFeeSchema = z.object({
 
 // Base Schema for all accounts
 const baseAccountSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().min(1, 'Account ID is required'), // Now required
   name: z.string().min(1, 'Account name is required'),
   type: z.enum(ACCOUNT_TYPES, { required_error: 'Account type is required' }),
   currency: z.string().min(3, 'Currency code is required (e.g., USD)').max(3).default('USD'),
-  // balance is NOT in base Zod schema; it's calculated and added to final Account object
 });
 
 // Schemas for Investment-like accounts
@@ -115,8 +114,8 @@ const tsCreditCardAccountSchema = baseAccountSchema.extend({
   rewards_summary: z.string().min(1, "Rewards summary is required"),
   interest: z.coerce.number({ required_error: "Interest rate is required" }),
   outstanding_debt: z.coerce.number({ required_error: "Outstanding debt is required" }),
-  current_billing_cycle_transactions: z.array(billingCycleTransactionSchema).min(0), // Kept as array
-  annual_fee: z.coerce.number().default(0), // Python: Optional[float] = 0.0, non-optional in TS so must have default
+  current_billing_cycle_transactions: z.array(billingCycleTransactionSchema).min(0),
+  annual_fee: z.coerce.number().default(0),
 });
 
 // Schema for Checking/Savings Account
@@ -143,11 +142,11 @@ const tsLoanAccountSchema = baseAccountSchema.extend({
   outstanding_balance: z.coerce.number({required_error: "Outstanding balance is required"}),
   total_paid: z.coerce.number({required_error: "Total paid to date is required"}),
   payment_due_date: z.string().min(1, "Payment due date is required"),
-  payment_history: z.array(z.record(z.any())).min(0), // Kept generic
+  payment_history: z.array(z.record(z.any())).min(0),
   loan_type: z.string().min(1, "Loan type is required"),
-  collateral: z.string().optional(), // Python: Optional[str] = None
+  collateral: z.string().optional(),
   current_outstanding_fees: loanFeeSchema,
-  other_payments: z.array(z.record(z.any())).min(0), // Kept generic
+  other_payments: z.array(z.record(z.any())).min(0),
 });
 
 // Schema for Payroll Account
@@ -192,13 +191,12 @@ const accountFormSchema = z.discriminatedUnion("type", [
   tsOtherAccountSchema,
 ]);
 
-// This type is for the form data itself, which won't have 'balance' directly from common fields.
 export type AccountFormData = z.infer<typeof accountFormSchema>;
 
 interface AccountFormProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  accountToEdit?: Account; // This is the final Account type, which includes 'balance'
+  accountToEdit?: Account;
 }
 
 export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountFormProps) {
@@ -208,33 +206,29 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
   const [jsonInput, setJsonInput] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
 
-  // Default values for the form, aligning with required fields in Zod schemas
   const getDefaultValues = (account?: Account): Partial<AccountFormData> => {
     const base = {
+      id: '', // Initialize id for new accounts
       name: '',
       currency: 'USD',
-      // Investment-like
       uninvested_amount: 0,
       asset_distribution: [],
       average_monthly_contribution: 0,
       employer_match: '',
-      // Credit Card
       total_limit: 0,
       current_limit: 0,
       rewards_summary: '',
-      interest: 0, // for CC and C/S
+      interest: 0,
       outstanding_debt: 0,
       current_billing_cycle_transactions: [], 
       annual_fee: 0,
-      // Checking/Savings
       current_amount: 0,
       overdraft_protection: '',
       minimum_balance_requirement: 0,
       fee: { no_minimum_balance_fee: 0, monthly_fee: 0, atm_fee: 0, overdraft_fee: 0 },
-      // Loan
       principal_left: 0,
-      interest_rate: 0, // for Loan
-      monthly_contribution: 0, // for Loan
+      interest_rate: 0,
+      monthly_contribution: 0,
       loan_term: '',
       loan_start_date: '',
       loan_end_date: '',
@@ -243,10 +237,9 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       payment_due_date: '',
       payment_history: [], 
       loan_type: '',
-      collateral: '', // Optional in Python, so can default to empty string or handle as undefined
+      collateral: '',
       current_outstanding_fees: { late_fee: 0, prepayment_penalty: 0, origination_fee: 0, other_fees: 0 },
       other_payments: [], 
-      // Payroll
       annual_income: 0,
       federal_taxes_withheld: 0,
       state: '',
@@ -261,18 +254,18 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       benefits: '',
       bonus_income: 0,
       year_to_date_income: 0,
-      // Other
       total_income: 0,
       total_debt: 0,
     };
     if (account) {
-      const { balance, id, ...restOfAccountToEdit } = account; 
+      const { balance, ...restOfAccountToEdit } = account; 
       return {
         ...base, 
+        id: account.id, // Set id if editing
         type: account.type, 
         ...restOfAccountToEdit, 
-        annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0, // Ensure default if undefined
-        collateral: (account as TSLoanAccount).collateral ?? '', // Ensure default if undefined
+        annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0,
+        collateral: (account as TSLoanAccount).collateral ?? '',
         asset_distribution: (account as any).asset_distribution || [],
         current_billing_cycle_transactions: (account as any).current_billing_cycle_transactions || [],
         payment_history: (account as any).payment_history || [],
@@ -309,10 +302,10 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
 
   const prepareDataForSubmit = (data: AccountFormData): Account => {
     let calculatedBalance = 0;
-    const accountId = accountToEdit?.id || crypto.randomUUID();
+    // const accountId = accountToEdit?.id || crypto.randomUUID(); // Removed: ID comes from form data
     
     const baseData = { 
-        id: accountId, 
+        id: data.id, // Use ID from form
         name: data.name, 
         type: data.type, 
         currency: data.currency, 
@@ -383,7 +376,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             payment_due_date: data.payment_due_date,
             payment_history: data.payment_history, 
             loan_type: data.loan_type,
-            ...(data.collateral && {collateral: data.collateral}), // only add if present
+            ...(data.collateral && {collateral: data.collateral}),
             current_outstanding_fees: data.current_outstanding_fees,
             other_payments: data.other_payments, 
         };
@@ -456,6 +449,9 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
   
   const renderCommonFields = () => (
     <>
+      <FormField control={form.control} name="id" render={({ field }) => (
+          <FormItem><FormLabel>Account ID</FormLabel><FormControl><Input placeholder="Unique Account ID" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
       <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem><FormLabel>Account Name</FormLabel><FormControl><Input placeholder="E.g., Main Checking" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
@@ -512,7 +508,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       <FormField control={form.control} name="interest" render={({ field }) => ( <FormItem><FormLabel>Interest Rate (APR %)</FormLabel><FormControl><Input type="number" placeholder="19.99" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="rewards_summary" render={({ field }) => ( <FormItem><FormLabel>Rewards Summary</FormLabel><FormControl><Textarea placeholder="E.g., 2% cashback on travel" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="annual_fee" render={({ field }) => ( <FormItem><FormLabel>Annual Fee</FormLabel><FormControl><Input type="number" placeholder="95" {...field} value={field.value ?? 0} /></FormControl><FormMessage /></FormItem> )} />
-      {/* For current_billing_cycle_transactions, a full array input is complex. Will be empty array by default. */}
     </>
   );
   
@@ -531,7 +526,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         <FormField control={form.control} name="fee.overdraft_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Overdraft Fee</FormLabel><FormControl><Input type="number" placeholder="35" {...field} /></FormControl><FormMessage /></FormItem> )} />
         <FormField control={form.control} name="fee.no_minimum_balance_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Min. Balance Fee</FormLabel><FormControl><Input type="number" placeholder="12" {...field} /></FormControl><FormMessage /></FormItem> )} />
       </div>
-      {/* For current_billing_cycle_transactions, a full array input is complex. Will be empty array by default. */}
     </>
   );
 
@@ -556,7 +550,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         <FormField control={form.control} name="current_outstanding_fees.origination_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Origination Fee</FormLabel><FormControl><Input type="number" placeholder="500" {...field} /></FormControl><FormMessage /></FormItem> )} />
         <FormField control={form.control} name="current_outstanding_fees.other_fees" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Other Fees</FormLabel><FormControl><Input type="number" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem> )} />
       </div>
-      {/* payment_history and other_payments are arrays, not directly editable as simple form fields currently */}
     </>
   );
 
@@ -624,7 +617,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
           <div className="space-y-4">
             <Label htmlFor="json-input">Paste JSON data for the account</Label>
             <Textarea id="json-input" value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} rows={12}
-              placeholder='{ "name": "My Investment", "type": "Investment", "currency": "USD", "uninvested_amount": 1000, "asset_distribution": [{"ticker": "AAPL", "quantity": 10, "average_cost_basis": 150}], ... }' />
+              placeholder='{ "id": "user-provided-id", "name": "My Investment", "type": "Investment", "currency": "USD", "uninvested_amount": 1000, "asset_distribution": [{"ticker": "AAPL", "quantity": 10, "average_cost_basis": 150}], ... }' />
             {jsonError && <p className="text-sm text-destructive">{jsonError}</p>}
             <DialogFooter className="pt-6">
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
@@ -636,3 +629,5 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     </Dialog>
   );
 }
+
+    

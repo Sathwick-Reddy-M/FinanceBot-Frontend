@@ -19,9 +19,6 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-      <footer className="text-center py-6 border-t text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} FinView. All rights reserved. Inspired by modern SaaS designs.</p>
-      </footer>
     </div>
   );
 }

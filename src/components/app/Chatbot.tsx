@@ -49,7 +49,7 @@ export function Chatbot() {
   };
 
   return (
-    <Card className="shadow-xl flex flex-col h-[calc(100vh-12rem)] max-h-[700px] w-full max-w-2xl mx-auto border border-border/70">
+    <Card className="shadow-xl flex flex-col max-h-[600px] w-full mx-auto border border-border/70"> {/* Adjusted height constraints */}
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-6 w-6 text-primary" />
@@ -118,4 +118,3 @@ export function Chatbot() {
     </Card>
   );
 }
-

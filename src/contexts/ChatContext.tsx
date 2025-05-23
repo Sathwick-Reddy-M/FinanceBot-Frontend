@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ChatMessage, Account } from '@/lib/types';
 import { useSessionStorageState } from '@/hooks/useSessionStorageState';
 import { submitChatMessageAction } from '@/lib/actions';
-import { SESSION_STORAGE_CHAT_KEY } from '@/lib/constants';
+import { SESSION_STORAGE_CHAT_KEY, SESSION_STORAGE_USER_DETAILS_KEY } from '@/lib/constants';
 import { useAccounts } from './AccountContext'; // To get financial data
 
 interface ChatContextType {
@@ -50,11 +50,27 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const botMessageId = addMessageInternal({ sender: 'bot', text: "Thinking..." }, true);
 
     try {
-      const botResponseText = await submitChatMessageAction({
-        userMessage: text,
-        accounts: accounts, // Pass current financial data
-        chatHistory: messages, // Pass chat history for context
+      const userDetailsString = sessionStorage.getItem(SESSION_STORAGE_USER_DETAILS_KEY);
+      const userDetails = userDetailsString ? JSON.parse(userDetailsString) : {};
+      const accountsData = userDetails.accounts || [];
+
+      const response = await fetch('http://localhost:5000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: text,
+          user_details: userDetails,
+          accounts: accountsData,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      const botResponseText = data.response || "No response from the bot.";
       updateMessageLoadingState(botMessageId, false, botResponseText);
     } catch (error) {
       console.error("Error sending message:", error);

@@ -59,7 +59,7 @@ export function Chatbot() {
           <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
         </Button>
       </CardHeader>
-      <CardContent className="flex-grow p-0 min-h-0"> {/* Added min-h-0 */}
+      <CardContent className="flex-grow p-0">
         <ScrollArea className="h-full" viewportRef={viewportRef}>
           <div className="p-4 space-y-2">
             {messages.length === 0 && (

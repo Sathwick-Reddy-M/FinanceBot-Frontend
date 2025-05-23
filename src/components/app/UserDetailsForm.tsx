@@ -28,7 +28,7 @@ import {
 import type { UserDetails } from '@/lib/types';
 import { useUserDetails } from '@/contexts/UserDetailsContext';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export const userDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -48,6 +48,18 @@ interface UserDetailsFormProps {
   currentUserDetails?: UserDetails | null;
 }
 
+const getDefaultValues = (details?: UserDetails | null): UserDetailsFormData => {
+  return {
+    name: details?.name || '',
+    age: details?.age || 0,
+    state: details?.state || '',
+    country: details?.country || '',
+    citizen_of: details?.citizen_of || '',
+    tax_filing_status: details?.tax_filing_status || '',
+    is_tax_resident: details?.is_tax_resident || false,
+  };
+};
+
 export function UserDetailsForm({ isOpen, onOpenChange, currentUserDetails }: UserDetailsFormProps) {
   const { updateUserDetails } = useUserDetails();
   const { toast } = useToast();
@@ -55,38 +67,34 @@ export function UserDetailsForm({ isOpen, onOpenChange, currentUserDetails }: Us
   const [jsonInput, setJsonInput] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
 
-  const getDefaultValues = (details?: UserDetails | null): UserDetailsFormData => {
-    return {
-      name: details?.name || '',
-      age: details?.age || 0,
-      state: details?.state || '',
-      country: details?.country || '',
-      citizen_of: details?.citizen_of || '',
-      tax_filing_status: details?.tax_filing_status || '',
-      is_tax_resident: details?.is_tax_resident || false,
-    };
-  };
+  const memoizedDefaultValues = useMemo(() => {
+    return getDefaultValues(currentUserDetails);
+  }, [currentUserDetails]);
 
   const form = useForm<UserDetailsFormData>({
     resolver: zodResolver(userDetailsSchema),
-    defaultValues: getDefaultValues(currentUserDetails),
+    defaultValues: memoizedDefaultValues,
   });
 
   useEffect(() => {
-    form.reset(getDefaultValues(currentUserDetails));
-    if (currentUserDetails && inputType === 'json') {
-      setJsonInput(JSON.stringify(currentUserDetails, null, 2));
-    } else if (!currentUserDetails && inputType === 'json') {
-        setJsonInput('');
+    if (isOpen) {
+      form.reset(memoizedDefaultValues);
+      if (inputType === 'json') {
+        if (currentUserDetails) {
+          setJsonInput(JSON.stringify(currentUserDetails, null, 2));
+        } else {
+          setJsonInput(''); // Clear for new JSON entry
+        }
+      }
     }
-  }, [currentUserDetails, form, isOpen, inputType]);
+  }, [isOpen, memoizedDefaultValues, inputType, form]);
 
 
   const onSubmit = (data: UserDetailsFormData) => {
     try {
       updateUserDetails(data);
       toast({ title: "Success", description: "User details updated successfully." });
-      onOpenChange(false);
+      onOpenChange(false); // Close dialog on successful submission
     } catch (error) {
       console.error("Submission error", error);
       toast({ title: "Error", description: `Failed to save user details. ${error instanceof Error ? error.message : ''}`, variant: "destructive" });
@@ -110,9 +118,20 @@ export function UserDetailsForm({ isOpen, onOpenChange, currentUserDetails }: Us
       toast({ title: "JSON Parse Error", description: "Invalid JSON format.", variant: "destructive" });
     }
   };
+  
+  const handleDialogClose = (openState: boolean) => {
+    onOpenChange(openState); // Update parent state
+    if (!openState) { // If dialog is closing
+        setJsonInput('');
+        setJsonError(null);
+        // Optionally reset inputType, though it might be better to persist user choice or default on open
+        // setInputType('form'); 
+    }
+  };
+
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) { form.reset(getDefaultValues(currentUserDetails)); setJsonInput(''); setJsonError(null); } }}>
+    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{currentUserDetails ? 'Edit User Details' : 'Add User Details'}</DialogTitle>
@@ -179,3 +198,4 @@ export function UserDetailsForm({ isOpen, onOpenChange, currentUserDetails }: Us
     </Dialog>
   );
 }
+

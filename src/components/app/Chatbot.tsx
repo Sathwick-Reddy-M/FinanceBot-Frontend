@@ -6,14 +6,13 @@ import { useChat } from '@/contexts/ChatContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Trash2, Loader2 } from 'lucide-react';
+import { Send, Trash2, Loader2, MessageCircle } from 'lucide-react';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function Chatbot() {
   const { messages, sendMessage, isSending, clearChat } = useChat();
   const [inputValue, setInputValue] = useState('');
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,9 +29,12 @@ export function Chatbot() {
   };
 
   return (
-    <Card className="shadow-xl flex flex-col h-[calc(100vh-10rem)] max-h-[700px] w-full max-w-2xl mx-auto">
+    <Card className="shadow-xl flex flex-col h-[calc(100vh-12rem)] max-h-[700px] w-full max-w-2xl mx-auto border border-border/70">
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
-        <CardTitle className="text-xl">Financial Assistant</CardTitle>
+        <div className="flex items-center gap-2">
+          <MessageCircle className="h-6 w-6 text-primary" />
+          <CardTitle className="text-xl">Financial Assistant</CardTitle>
+        </div>
         <Button variant="ghost" size="icon" onClick={clearChat} disabled={messages.length === 0 || isSending} aria-label="Clear chat">
           <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
         </Button>
@@ -41,11 +43,13 @@ export function Chatbot() {
         <ScrollArea className="h-full" viewportRef={viewportRef}>
           <div className="p-4 space-y-2">
             {messages.length === 0 && (
-              <p className="text-center text-muted-foreground pt-8">
-                Ask me anything about your finances!
-                <br />
-                For example: "Can I afford a new car?" or "Summarize my investments."
-              </p>
+              <div className="text-center text-muted-foreground pt-8 flex flex-col items-center">
+                <MessageCircle className="h-12 w-12 text-primary/50 mb-4" />
+                <p className="font-medium">Ask me anything about your finances!</p>
+                <p className="text-sm">
+                  E.g., "Can I afford a new car?" or "Summarize my investments."
+                </p>
+              </div>
             )}
             {messages.map((msg) => (
               <ChatMessageBubble key={msg.id} message={msg} />

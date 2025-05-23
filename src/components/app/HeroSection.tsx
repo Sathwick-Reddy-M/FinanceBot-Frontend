@@ -16,6 +16,8 @@ export function HeroSection() {
           FinView helps you understand your spending, track investments, and reach
           your financial goals with an AI-powered assistant.
         </p>
+        {/* Buttons removed as per request */}
+        {/* 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
           <Button asChild size="lg" className="shadow-lg hover:shadow-primary/30 transition-shadow">
             <Link href="/#dashboard">
@@ -28,7 +30,10 @@ export function HeroSection() {
             </Link>
           </Button>
         </div>
+        */}
         
+        {/* Feature tiles removed as per request */}
+        {/*
         <div id="features" className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
           <div className="bg-card p-6 rounded-xl shadow-lg border border-border/50">
             <TrendingUp className="h-10 w-10 text-primary mb-4" />
@@ -52,8 +57,8 @@ export function HeroSection() {
             </p>
           </div>
         </div>
+        */}
       </div>
     </section>
   );
 }
-

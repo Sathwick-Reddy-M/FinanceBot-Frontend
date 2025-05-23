@@ -3,15 +3,23 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/contexts/ChatContext';
+import { useUserDetails } from '@/contexts/UserDetailsContext'; // Added
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Trash2, Loader2, MessageCircle } from 'lucide-react';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // Added
 
 export function Chatbot() {
   const { messages, sendMessage, isSending, clearChat } = useChat();
+  const { userDetails, loading: userDetailsLoading } = useUserDetails(); // Added
   const [inputValue, setInputValue] = useState('');
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -21,9 +29,13 @@ export function Chatbot() {
     }
   }, [messages]);
 
+  const areUserDetailsComplete = !!userDetails;
+  const isChatDisabledByUserDetails = !userDetailsLoading && !areUserDetailsComplete;
+  const finalDisabledState = isSending || userDetailsLoading || !areUserDetailsComplete;
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!inputValue.trim() || isSending) return;
+    if (!inputValue.trim() || finalDisabledState) return;
     await sendMessage(inputValue);
     setInputValue('');
   };
@@ -35,7 +47,7 @@ export function Chatbot() {
           <MessageCircle className="h-6 w-6 text-primary" />
           <CardTitle className="text-xl">Financial Assistant</CardTitle>
         </div>
-        <Button variant="ghost" size="icon" onClick={clearChat} disabled={messages.length === 0 || isSending} aria-label="Clear chat">
+        <Button variant="ghost" size="icon" onClick={clearChat} disabled={messages.length === 0 || finalDisabledState} aria-label="Clear chat">
           <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
         </Button>
       </CardHeader>
@@ -49,6 +61,11 @@ export function Chatbot() {
                 <p className="text-sm">
                   E.g., "Can I afford a new car?" or "Summarize my investments."
                 </p>
+                {isChatDisabledByUserDetails && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+                    (Complete your user profile to enable chat)
+                  </p>
+                )}
               </div>
             )}
             {messages.map((msg) => (
@@ -59,16 +76,30 @@ export function Chatbot() {
       </CardContent>
       <CardFooter className="p-4 border-t">
         <form onSubmit={handleSendMessage} className="flex w-full items-center space-x-2">
-          <Input
-            type="text"
-            placeholder="Type your message..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            disabled={isSending}
-            className="flex-grow"
-            aria-label="Chat message input"
-          />
-          <Button type="submit" disabled={isSending || !inputValue.trim()} size="icon" aria-label="Send message">
+          <TooltipProvider>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <div className="flex-grow" tabIndex={isChatDisabledByUserDetails ? 0 : undefined}>
+                  <Input
+                    type="text"
+                    placeholder={isChatDisabledByUserDetails ? "Complete user profile to chat" : "Type your message..."}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    disabled={finalDisabledState}
+                    className="w-full"
+                    aria-label="Chat message input"
+                    style={isChatDisabledByUserDetails ? { cursor: 'not-allowed' } : {}}
+                  />
+                </div>
+              </TooltipTrigger>
+              {isChatDisabledByUserDetails && (
+                <TooltipContent>
+                  <p>Please complete your user profile to enable the chat.</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          <Button type="submit" disabled={finalDisabledState || !inputValue.trim()} size="icon" aria-label="Send message">
             {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
           </Button>
         </form>

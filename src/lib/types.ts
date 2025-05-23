@@ -1,9 +1,10 @@
 
+
 // Client-side representation of Python's AssetDistribution, with an added ID for React keys
 export interface AssetDistribution {
   id: string; // Client-side generated UUID for React keys
   ticker: string;
-  quantity: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
+  quantity: number;
   average_cost_basis: number;
 }
 
@@ -16,7 +17,7 @@ export interface BillingCycleTransaction {
 export interface CheckingOrSavingsAccountFee {
   no_minimum_balance_fee: number;
   monthly_fee: number;
-  atm_fee: number; // Python uses ATM_fee, will keep camelCase for TS consistency: atmFee
+  atm_fee: number;
   overdraft_fee: number;
 }
 
@@ -40,43 +41,43 @@ export interface BaseAccount {
 export interface TSInvestmentAccount extends BaseAccount {
   type: 'Investment';
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSHSAAccount extends BaseAccount {
   type: 'HSA';
   average_monthly_contribution: number;
-  uninvested_amount: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
-  asset_distribution: AssetDistribution[];
+  uninvested_amount: number;
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSTraditionalIRAAccount extends BaseAccount {
   type: 'Traditional IRA';
   uninvested_amount: number;
-  average_monthly_contribution: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
-  asset_distribution: AssetDistribution[];
+  average_monthly_contribution: number;
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSRothIRAAccount extends BaseAccount {
   type: 'Roth IRA';
   uninvested_amount: number;
-  average_monthly_contribution: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
-  asset_distribution: AssetDistribution[];
+  average_monthly_contribution: number;
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSRetirement401kAccount extends BaseAccount {
   type: 'Retirement 401k';
   average_monthly_contribution: number;
-  uninvested_amount: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
-  asset_distribution: AssetDistribution[];
+  uninvested_amount: number;
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
   employer_match: string;
 }
 
 export interface TSRoth401kAccount extends BaseAccount {
   type: 'Roth 401k';
   average_monthly_contribution: number;
-  uninvested_amount: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
-  asset_distribution: AssetDistribution[];
+  uninvested_amount: number;
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
   employer_match: string;
 }
 
@@ -88,7 +89,7 @@ export interface TSCreditCardAccount extends BaseAccount {
   interest: number;
   outstanding_debt: number;
   current_billing_cycle_transactions: BillingCycleTransaction[];
-  annual_fee: number; // Python: Optional[float] = 0.0, so non-optional in TS, with default if undefined from source
+  annual_fee: number;
 }
 
 export interface TSCheckingOrSavingsAccount extends BaseAccount {
@@ -115,7 +116,7 @@ export interface TSLoanAccount extends BaseAccount {
   payment_due_date: string;
   payment_history: Array<Record<string, any>>;
   loan_type: string;
-  collateral?: string; // Python: Optional[str] = None
+  collateral?: string;
   current_outstanding_fees: LoanFee;
   other_payments: Array<Record<string, any>>;
 }
@@ -197,4 +198,15 @@ export interface ChatMessage {
   text: string;
   timestamp: number; // Unix timestamp
   isLoading?: boolean;
+}
+
+// User Details Type
+export interface UserDetails {
+  name: string;
+  age: number;
+  state: string;
+  country: string;
+  citizen_of: string;
+  tax_filing_status: string;
+  is_tax_resident: boolean;
 }

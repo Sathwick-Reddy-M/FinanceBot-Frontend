@@ -83,7 +83,7 @@ const baseAccountSchema = z.object({
 // Schemas for Investment-like accounts
 const investmentRelatedFeaturesBase = {
   uninvested_amount: z.coerce.number({ required_error: "Uninvested amount is required" }),
-  assest_distribution: z.array(assetDistributionSchema).min(0, "Asset distribution list cannot be null"),
+  asset_distribution: z.array(assetDistributionSchema).min(0, "Asset distribution list cannot be null"),
 };
 
 const tsInvestmentAccountSchema = baseAccountSchema.extend({
@@ -215,7 +215,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       currency: 'USD',
       // Investment-like
       uninvested_amount: 0,
-      assest_distribution: [],
+      asset_distribution: [],
       average_monthly_contribution: 0,
       employer_match: '',
       // Credit Card
@@ -273,7 +273,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         ...restOfAccountToEdit, 
         annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0, // Ensure default if undefined
         collateral: (account as TSLoanAccount).collateral ?? '', // Ensure default if undefined
-        assest_distribution: (account as any).assest_distribution || [],
+        asset_distribution: (account as any).asset_distribution || [],
         current_billing_cycle_transactions: (account as any).current_billing_cycle_transactions || [],
         payment_history: (account as any).payment_history || [],
         other_payments: (account as any).other_payments || [],
@@ -289,18 +289,18 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
   });
   
   const { fields: assetFields, append: appendAsset, remove: removeAsset } = useFieldArray({
-    control: form.control as Control<AccountFormData & { assest_distribution?: AssetDistribution[] }>, 
-    name: "assest_distribution" as 'assest_distribution', 
+    control: form.control as Control<AccountFormData & { asset_distribution?: AssetDistribution[] }>, 
+    name: "asset_distribution" as 'asset_distribution', 
   });
 
   useEffect(() => {
     form.reset(getDefaultValues(accountToEdit));
      if (accountToEdit && ['Investment', 'HSA', 'Traditional IRA', 'Roth IRA', 'Retirement 401k', 'Roth 401k'].includes(accountToEdit.type)) {
-        const currentAssets = (accountToEdit as any).assest_distribution || [];
-        form.setValue('assest_distribution', []); 
-        form.setValue('assest_distribution', currentAssets as AssetDistribution[]);
+        const currentAssets = (accountToEdit as any).asset_distribution || [];
+        form.setValue('asset_distribution', []); 
+        form.setValue('asset_distribution', currentAssets as AssetDistribution[]);
     } else {
-        form.setValue('assest_distribution', []);
+        form.setValue('asset_distribution', []);
     }
   }, [accountToEdit, form, isOpen]);
 
@@ -323,7 +323,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     switch (data.type) {
       case 'Investment':
         calculatedBalance = data.uninvested_amount;
-        specificData = { uninvested_amount: data.uninvested_amount, assest_distribution: data.assest_distribution };
+        specificData = { uninvested_amount: data.uninvested_amount, asset_distribution: data.asset_distribution };
         break;
       case 'HSA':
       case 'Traditional IRA':
@@ -331,7 +331,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         calculatedBalance = data.uninvested_amount;
         specificData = { 
             uninvested_amount: data.uninvested_amount, 
-            assest_distribution: data.assest_distribution,
+            asset_distribution: data.asset_distribution,
             average_monthly_contribution: data.average_monthly_contribution
         };
         break;
@@ -340,7 +340,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         calculatedBalance = data.uninvested_amount;
         specificData = { 
             uninvested_amount: data.uninvested_amount, 
-            assest_distribution: data.assest_distribution,
+            asset_distribution: data.asset_distribution,
             average_monthly_contribution: data.average_monthly_contribution,
             employer_match: data.employer_match
         };
@@ -461,7 +461,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         )} />
       <FormField control={form.control} name="type" render={({ field }) => (
           <FormItem><FormLabel>Account Type</FormLabel>
-            <Select onValueChange={(value) => { field.onChange(value); form.setValue('assest_distribution', []); }} defaultValue={field.value}>
+            <Select onValueChange={(value) => { field.onChange(value); form.setValue('asset_distribution', []); }} defaultValue={field.value}>
               <FormControl><SelectTrigger><SelectValue placeholder="Select account type" /></SelectTrigger></FormControl>
               <SelectContent>{ACCOUNT_TYPES.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
             </Select><FormMessage /></FormItem>
@@ -477,13 +477,13 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       <Label className="text-base font-medium">Asset Distribution</Label>
       {assetFields.map((field, index) => (
         <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md bg-muted/30">
-          <FormField control={form.control} name={`assest_distribution.${index}.ticker`} render={({ field: f }) => (
+          <FormField control={form.control} name={`asset_distribution.${index}.ticker`} render={({ field: f }) => (
               <FormItem className="flex-1"><FormLabel className="text-xs">Ticker</FormLabel><FormControl><Input placeholder="E.g., AAPL, VTI" {...f} /></FormControl><FormMessage /></FormItem>
             )} />
-          <FormField control={form.control} name={`assest_distribution.${index}.quantity`} render={({ field: f }) => (
+          <FormField control={form.control} name={`asset_distribution.${index}.quantity`} render={({ field: f }) => (
               <FormItem className="w-1/4"><FormLabel className="text-xs">Quantity</FormLabel><FormControl><Input type="number" placeholder="10" {...f} /></FormControl><FormMessage /></FormItem>
             )} />
-          <FormField control={form.control} name={`assest_distribution.${index}.average_cost_basis`} render={({ field: f }) => (
+          <FormField control={form.control} name={`asset_distribution.${index}.average_cost_basis`} render={({ field: f }) => (
               <FormItem className="w-1/3"><FormLabel className="text-xs">Avg. Cost Basis ($)</FormLabel><FormControl><Input type="number" placeholder="150.25" {...f} /></FormControl><FormMessage /></FormItem>
             )} />
           <Button type="button" variant="ghost" size="icon" onClick={() => removeAsset(index)} aria-label="Remove asset" className="mt-auto"><MinusCircle className="h-5 w-5 text-destructive" /></Button>
@@ -624,7 +624,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
           <div className="space-y-4">
             <Label htmlFor="json-input">Paste JSON data for the account</Label>
             <Textarea id="json-input" value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} rows={12}
-              placeholder='{ "name": "My Investment", "type": "Investment", "currency": "USD", "uninvested_amount": 1000, "assest_distribution": [{"ticker": "AAPL", "quantity": 10, "average_cost_basis": 150}], ... }' />
+              placeholder='{ "name": "My Investment", "type": "Investment", "currency": "USD", "uninvested_amount": 1000, "asset_distribution": [{"ticker": "AAPL", "quantity": 10, "average_cost_basis": 150}], ... }' />
             {jsonError && <p className="text-sm text-destructive">{jsonError}</p>}
             <DialogFooter className="pt-6">
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>

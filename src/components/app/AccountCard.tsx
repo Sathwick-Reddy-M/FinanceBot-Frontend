@@ -1,5 +1,5 @@
 
-"use client";
+
 
 import type { Account, AccountType, TSInvestmentAccount, TSCreditCardAccount, TSLoanAccount, TSCheckingOrSavingsAccount, TSPayrollAccount, TSHSAAccount, TSTraditionalIRAAccount, TSRothIRAAccount, TSRetirement401kAccount, TSRoth401kAccount, TSOtherAccount, AssetDistribution } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,18 +44,18 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
         return (
           <>
             <p className="text-sm">Uninvested: {formatCurrency(invAcc.uninvested_amount, account.currency)}</p>
-            {invAcc.assest_distribution && invAcc.assest_distribution.length > 0 && (
-              <div>
+            {invAcc.asset_distribution && invAcc.asset_distribution.length > 0 && (
+              <div className="mt-3">
                 <h4 className="text-xs font-medium text-muted-foreground mt-2 mb-1">Top Assets:</h4>
                 <div className="space-y-0.5">
-                  {invAcc.assest_distribution.slice(0, 2).map((asset: AssetDistribution) => (
+                  {invAcc.asset_distribution.slice(0, 2).map((asset: AssetDistribution) => (
                     <div key={asset.id || asset.ticker} className="flex justify-between items-center text-xs">
                       <span>{asset.ticker} ({asset.quantity} units)</span>
                       <span className="text-muted-foreground">Avg. Cost: {formatCurrency(asset.average_cost_basis, account.currency)}</span>
                     </div>
                   ))}
-                  {invAcc.assest_distribution.length > 2 && (
-                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.assest_distribution.length - 2} more</p>
+                  {invAcc.asset_distribution.length > 2 && (
+                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.asset_distribution.length - 2} more</p>
                   )}
                 </div>
               </div>
@@ -71,18 +71,18 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
           <>
             <p className="text-sm">Uninvested: {formatCurrency(invAcc.uninvested_amount, account.currency)}</p>
             <p className="text-sm">Avg. Monthly Contrib.: {formatCurrency(invAcc.average_monthly_contribution, account.currency)}</p>
-            {invAcc.assest_distribution && invAcc.assest_distribution.length > 0 && (
-              <div>
+            {invAcc.asset_distribution && invAcc.asset_distribution.length > 0 && (
+              <div className="mt-3">
                 <h4 className="text-xs font-medium text-muted-foreground mt-2 mb-1">Top Assets:</h4>
                  <div className="space-y-0.5">
-                  {invAcc.assest_distribution.slice(0, 2).map((asset: AssetDistribution) => (
+                  {invAcc.asset_distribution.slice(0, 2).map((asset: AssetDistribution) => (
                     <div key={asset.id || asset.ticker} className="flex justify-between items-center text-xs">
                       <span>{asset.ticker} ({asset.quantity} units)</span>
                       <span className="text-muted-foreground">Avg. Cost: {formatCurrency(asset.average_cost_basis, account.currency)}</span>
                     </div>
                   ))}
-                  {invAcc.assest_distribution.length > 2 && (
-                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.assest_distribution.length - 2} more</p>
+                  {invAcc.asset_distribution.length > 2 && (
+                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.asset_distribution.length - 2} more</p>
                   )}
                 </div>
               </div>
@@ -98,18 +98,18 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
             <p className="text-sm">Uninvested: {formatCurrency(invAcc.uninvested_amount, account.currency)}</p>
             <p className="text-sm">Avg. Monthly Contrib.: {formatCurrency(invAcc.average_monthly_contribution, account.currency)}</p>
             <p className="text-sm">Employer Match: {invAcc.employer_match}</p>
-            {invAcc.assest_distribution && invAcc.assest_distribution.length > 0 && (
-              <div>
+            {invAcc.asset_distribution && invAcc.asset_distribution.length > 0 && (
+              <div className="mt-3">
                 <h4 className="text-xs font-medium text-muted-foreground mt-2 mb-1">Top Assets:</h4>
                  <div className="space-y-0.5">
-                  {invAcc.assest_distribution.slice(0, 2).map((asset: AssetDistribution) => (
+                  {invAcc.asset_distribution.slice(0, 2).map((asset: AssetDistribution) => (
                     <div key={asset.id || asset.ticker} className="flex justify-between items-center text-xs">
                       <span>{asset.ticker} ({asset.quantity} units)</span>
                       <span className="text-muted-foreground">Avg. Cost: {formatCurrency(asset.average_cost_basis, account.currency)}</span>
                     </div>
                   ))}
-                  {invAcc.assest_distribution.length > 2 && (
-                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.assest_distribution.length - 2} more</p>
+                  {invAcc.asset_distribution.length > 2 && (
+                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.asset_distribution.length - 2} more</p>
                   )}
                 </div>
               </div>

@@ -3,7 +3,7 @@
 export interface AssetDistribution {
   id: string; // Client-side generated UUID for React keys
   ticker: string;
-  quantity: number;
+  quantity: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
   average_cost_basis: number;
 }
 
@@ -40,43 +40,43 @@ export interface BaseAccount {
 export interface TSInvestmentAccount extends BaseAccount {
   type: 'Investment';
   uninvested_amount: number;
-  assest_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSHSAAccount extends BaseAccount {
   type: 'HSA';
   average_monthly_contribution: number;
-  uninvested_amount: number;
-  assest_distribution: AssetDistribution[];
+  uninvested_amount: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSTraditionalIRAAccount extends BaseAccount {
   type: 'Traditional IRA';
   uninvested_amount: number;
-  average_monthly_contribution: number;
-  assest_distribution: AssetDistribution[];
+  average_monthly_contribution: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSRothIRAAccount extends BaseAccount {
   type: 'Roth IRA';
   uninvested_amount: number;
-  average_monthly_contribution: number;
-  assest_distribution: AssetDistribution[];
+  average_monthly_contribution: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSRetirement401kAccount extends BaseAccount {
   type: 'Retirement 401k';
   average_monthly_contribution: number;
-  uninvested_amount: number;
-  assest_distribution: AssetDistribution[];
+  uninvested_amount: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
+  asset_distribution: AssetDistribution[];
   employer_match: string;
 }
 
 export interface TSRoth401kAccount extends BaseAccount {
   type: 'Roth 401k';
   average_monthly_contribution: number;
-  uninvested_amount: number;
-  assest_distribution: AssetDistribution[];
+  uninvested_amount: number; // Client-side representation of Python's AssetDistribution, with an added ID for React keys
+  asset_distribution: AssetDistribution[];
   employer_match: string;
 }
 

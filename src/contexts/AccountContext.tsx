@@ -27,22 +27,32 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const addAccount = (account: Account) => {
+    if (accounts.some(existingAccount => existingAccount.id === account.id)) {
+      alert('Account with this ID already exists. Please use a unique ID.');
+      return;
+    }
     // Account object from form submission should already have id and calculated balance
     let accountToAdd = { ...account };
     
-    if ('assest_distribution' in accountToAdd && accountToAdd.assest_distribution) {
-      accountToAdd.assest_distribution = accountToAdd.assest_distribution.map((h: AssetDistribution) => ({...h, id: h.id || crypto.randomUUID()}));
-    }
-    // Similar logic for other array fields if they need client-side IDs for React keys, e.g., current_billing_cycle_transactions
-    // For now, only assest_distribution is explicitly managed with useFieldArray in the form for IDs.
-
+    // Check if accountToAdd has 'asset_distribution' and if it's an array
+    // Use 'asset_distribution' (single 's') for consistency with types.ts
+    if ('asset_distribution' in accountToAdd && Array.isArray((accountToAdd as any).asset_distribution)) {
+      (accountToAdd as any).asset_distribution = (accountToAdd as any).asset_distribution.map((item: AssetDistribution) => ({
+        ...item,
+        id: item.id || crypto.randomUUID(), // Ensure client-side ID for React keys
+      }));
+    } // Fixed: Added missing closing brace for the if statement
     setAccounts((prevAccounts) => [...prevAccounts, accountToAdd]);
   };
 
   const editAccount = (updatedAccount: Account) => {
     let accountToUpdate = { ...updatedAccount };
-    if ('assest_distribution' in accountToUpdate && accountToUpdate.assest_distribution) {
-      accountToUpdate.assest_distribution = accountToUpdate.assest_distribution.map((h: AssetDistribution) => ({...h, id: h.id || crypto.randomUUID()}));
+    // Use 'asset_distribution' (single 's') for consistency with types.ts
+    if ('asset_distribution' in accountToUpdate && Array.isArray((accountToUpdate as any).asset_distribution)) {
+      (accountToUpdate as any).asset_distribution = (accountToUpdate as any).asset_distribution.map((item: AssetDistribution) => ({
+        ...item,
+        id: item.id || crypto.randomUUID(),
+      }));
     }
     // Similar for other arrays if needed
     setAccounts((prevAccounts) =>

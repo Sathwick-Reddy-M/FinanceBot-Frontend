@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Account, AccountType, TSInvestmentAccount, TSCreditCardAccount, TSLoanAccount, TSCheckingOrSavingsAccount, TSPayrollAccount, TSHSAAccount, TSTraditionalIRAAccount, TSRothIRAAccount, TSRetirement401kAccount, TSRoth401kAccount, TSOtherAccount } from '@/lib/types';
+import type { Account, AccountType, TSInvestmentAccount, TSCreditCardAccount, TSLoanAccount, TSCheckingOrSavingsAccount, TSPayrollAccount, TSHSAAccount, TSTraditionalIRAAccount, TSRothIRAAccount, TSRetirement401kAccount, TSRoth401kAccount, TSOtherAccount, AssetDistribution } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,12 +14,11 @@ interface AccountCardProps {
   onDelete: (account: Account) => void;
 }
 
-// Updated Visuals to match new Account Types
 const AccountTypeVisuals: Record<AccountType, { icon: React.ElementType, emoji: string }> = {
   'Investment': { icon: TrendingUp, emoji: "📈" },
   'HSA': { icon: ShieldCheck, emoji: "🏥" },
   'Traditional IRA': { icon: PiggyBank, emoji: "👴" },
-  'Roth IRA': { icon: PiggyBank, emoji: "🌅" }, // Could use a different icon/emoji if desired
+  'Roth IRA': { icon: PiggyBank, emoji: "🌅" },
   'Retirement 401k': { icon: Briefcase, emoji: "🏢" },
   'Roth 401k': { icon: Building2, emoji: "🏦" },
   'Credit Card': { icon: CreditCardIcon, emoji: "💳" },
@@ -32,7 +31,7 @@ const AccountTypeVisuals: Record<AccountType, { icon: React.ElementType, emoji: 
 
 export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
   const formatCurrency = (amount: number | undefined, currencyCode: string) => {
-    if (amount === undefined) return 'N/A';
+    if (amount === undefined) return 'N/A'; // Should not happen if fields are required
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(amount);
   };
 
@@ -40,43 +39,92 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
 
   const renderAccountSpecificDetails = () => {
     switch (account.type) {
-      case 'Investment':
-      case 'HSA':
-      case 'Traditional IRA':
-      case 'Roth IRA':
-      case 'Retirement 401k':
-      case 'Roth 401k':
-        const invAcc = account as TSInvestmentAccount | TSHSAAccount | TSTraditionalIRAAccount | TSRothIRAAccount | TSRetirement401kAccount | TSRoth401kAccount;
+      case 'Investment': {
+        const invAcc = account as TSInvestmentAccount;
         return (
           <>
-            {invAcc.uninvestedAmount !== undefined && <p className="text-sm">Uninvested: {formatCurrency(invAcc.uninvestedAmount, account.currency)}</p>}
-            {invAcc.averageMonthlyContribution !== undefined && <p className="text-sm">Avg. Monthly Contrib.: {formatCurrency(invAcc.averageMonthlyContribution, account.currency)}</p>}
-            {('employerMatch' in invAcc) && invAcc.employerMatch && <p className="text-sm">Employer Match: {invAcc.employerMatch}</p>}
-            {invAcc.holdings && invAcc.holdings.length > 0 && (
+            <p className="text-sm">Uninvested: {formatCurrency(invAcc.uninvested_amount, account.currency)}</p>
+            {invAcc.assest_distribution && invAcc.assest_distribution.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-muted-foreground mt-2 mb-1">Top Holdings:</h4>
+                <h4 className="text-xs font-medium text-muted-foreground mt-2 mb-1">Top Assets:</h4>
                 <div className="space-y-0.5">
-                  {invAcc.holdings.slice(0, 2).map((holding) => (
-                    <div key={holding.id || holding.name} className="flex justify-between items-center text-xs">
-                      <span>{holding.name}</span>
-                      <span className="text-muted-foreground">{holding.percentage.toFixed(1)}%</span>
+                  {invAcc.assest_distribution.slice(0, 2).map((asset: AssetDistribution) => (
+                    <div key={asset.id || asset.ticker} className="flex justify-between items-center text-xs">
+                      <span>{asset.ticker} ({asset.quantity} units)</span>
+                      <span className="text-muted-foreground">Avg. Cost: {formatCurrency(asset.average_cost_basis, account.currency)}</span>
                     </div>
                   ))}
-                  {invAcc.holdings.length > 2 && (
-                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.holdings.length - 2} more</p>
+                  {invAcc.assest_distribution.length > 2 && (
+                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.assest_distribution.length - 2} more</p>
                   )}
                 </div>
               </div>
             )}
           </>
         );
-      case 'Credit Card':
-        const ccAcc = account as TSCreditCardAccount;
-        const utilization = ccAcc.totalLimit && ccAcc.outstandingDebt ? (Math.abs(ccAcc.outstandingDebt) / ccAcc.totalLimit) * 100 : 0;
+      }
+      case 'HSA':
+      case 'Traditional IRA':
+      case 'Roth IRA': {
+        const invAcc = account as TSHSAAccount | TSTraditionalIRAAccount | TSRothIRAAccount;
         return (
           <>
-            {ccAcc.totalLimit !== undefined && <p className="text-sm">Limit: {formatCurrency(ccAcc.totalLimit, account.currency)}</p>}
-            {ccAcc.outstandingDebt !== undefined && ccAcc.totalLimit !== undefined && ccAcc.totalLimit > 0 && (
+            <p className="text-sm">Uninvested: {formatCurrency(invAcc.uninvested_amount, account.currency)}</p>
+            <p className="text-sm">Avg. Monthly Contrib.: {formatCurrency(invAcc.average_monthly_contribution, account.currency)}</p>
+            {invAcc.assest_distribution && invAcc.assest_distribution.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground mt-2 mb-1">Top Assets:</h4>
+                 <div className="space-y-0.5">
+                  {invAcc.assest_distribution.slice(0, 2).map((asset: AssetDistribution) => (
+                    <div key={asset.id || asset.ticker} className="flex justify-between items-center text-xs">
+                      <span>{asset.ticker} ({asset.quantity} units)</span>
+                      <span className="text-muted-foreground">Avg. Cost: {formatCurrency(asset.average_cost_basis, account.currency)}</span>
+                    </div>
+                  ))}
+                  {invAcc.assest_distribution.length > 2 && (
+                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.assest_distribution.length - 2} more</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case 'Retirement 401k':
+      case 'Roth 401k': {
+        const invAcc = account as TSRetirement401kAccount | TSRoth401kAccount;
+         return (
+          <>
+            <p className="text-sm">Uninvested: {formatCurrency(invAcc.uninvested_amount, account.currency)}</p>
+            <p className="text-sm">Avg. Monthly Contrib.: {formatCurrency(invAcc.average_monthly_contribution, account.currency)}</p>
+            <p className="text-sm">Employer Match: {invAcc.employer_match}</p>
+            {invAcc.assest_distribution && invAcc.assest_distribution.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground mt-2 mb-1">Top Assets:</h4>
+                 <div className="space-y-0.5">
+                  {invAcc.assest_distribution.slice(0, 2).map((asset: AssetDistribution) => (
+                    <div key={asset.id || asset.ticker} className="flex justify-between items-center text-xs">
+                      <span>{asset.ticker} ({asset.quantity} units)</span>
+                      <span className="text-muted-foreground">Avg. Cost: {formatCurrency(asset.average_cost_basis, account.currency)}</span>
+                    </div>
+                  ))}
+                  {invAcc.assest_distribution.length > 2 && (
+                    <p className="text-xs text-muted-foreground text-right">...and {invAcc.assest_distribution.length - 2} more</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+      case 'Credit Card': {
+        const ccAcc = account as TSCreditCardAccount;
+        const utilization = ccAcc.total_limit && ccAcc.outstanding_debt ? (Math.abs(ccAcc.outstanding_debt) / ccAcc.total_limit) * 100 : 0;
+        return (
+          <>
+            <p className="text-sm">Limit: {formatCurrency(ccAcc.total_limit, account.currency)}</p>
+            <p className="text-sm">Current Limit: {formatCurrency(ccAcc.current_limit, account.currency)}</p>
+            {ccAcc.total_limit > 0 && (
               <div>
                 <div className="flex justify-between text-xs mt-1 mb-0.5">
                   <span className="text-muted-foreground">Utilized:</span>
@@ -85,27 +133,32 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
                 <Progress value={utilization} className="h-1.5" />
               </div>
             )}
-            {ccAcc.interestRate !== undefined && <p className="text-sm mt-1">APR: {ccAcc.interestRate}%</p>}
+            <p className="text-sm mt-1">APR: {ccAcc.interest}%</p>
             {ccAcc.dueDate && <p className="text-xs text-muted-foreground">Due: {new Date(ccAcc.dueDate).toLocaleDateString()}</p>}
+            {ccAcc.annual_fee && ccAcc.annual_fee > 0 && <p className="text-sm">Annual Fee: {formatCurrency(ccAcc.annual_fee, account.currency)}</p>}
           </>
         );
-      case 'Checking/Savings':
+      }
+      case 'Checking/Savings': {
         const csAcc = account as TSCheckingOrSavingsAccount;
         return (
           <>
             {csAcc.bankName && <p className="text-sm">Bank: {csAcc.bankName}</p>}
-            {csAcc.interestRate !== undefined && <p className="text-sm">Interest Rate: {csAcc.interestRate}% APY</p>}
+            <p className="text-sm">Interest Rate: {csAcc.interest}% APY</p>
             {csAcc.accountNumberLast4 && <p className="text-xs text-muted-foreground">Acc #: ******{csAcc.accountNumberLast4}</p>}
+            <p className="text-sm">Min Balance: {formatCurrency(csAcc.minimum_balance_requirement, account.currency)}</p>
           </>
         );
-      case 'Loan':
+      }
+      case 'Loan': {
         const loanAcc = account as TSLoanAccount;
-        const loanPaidPercentage = loanAcc.originalAmount && loanAcc.balance ? ((loanAcc.originalAmount - Math.abs(loanAcc.balance)) / loanAcc.originalAmount) * 100 : 0;
+        // originalAmount is optional in TS type (for UI) but not in Python. Assuming it exists for progress.
+        const loanPaidPercentage = loanAcc.originalAmount && loanAcc.principal_left ? ((loanAcc.originalAmount - Math.abs(loanAcc.principal_left)) / loanAcc.originalAmount) * 100 : 0;
         return (
           <>
-            {loanAcc.loanType && <p className="text-sm">Type: {loanAcc.loanType}</p>}
-            {loanAcc.interestRate !== undefined && <p className="text-sm">Interest Rate: {loanAcc.interestRate}%</p>}
-            {loanAcc.originalAmount !== undefined && loanAcc.originalAmount > 0 && (
+            <p className="text-sm">Type: {loanAcc.loan_type}</p>
+            <p className="text-sm">Interest Rate: {loanAcc.interest_rate}%</p>
+            {loanAcc.originalAmount && loanAcc.originalAmount > 0 && (
                <div>
                 <div className="flex justify-between text-xs mt-1 mb-0.5">
                   <span className="text-muted-foreground">Loan Paid:</span>
@@ -115,26 +168,30 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
                 <p className="text-xs text-muted-foreground mt-0.5 text-right">Original: {formatCurrency(loanAcc.originalAmount, account.currency)}</p>
               </div>
             )}
-            {loanAcc.nextPaymentDueDate && <p className="text-xs text-muted-foreground">Next Due: {new Date(loanAcc.nextPaymentDueDate).toLocaleDateString()}</p>}
+            <p className="text-xs text-muted-foreground">Next Due: {new Date(loanAcc.payment_due_date).toLocaleDateString()}</p>
           </>
         );
-      case 'Payroll':
+      }
+      case 'Payroll': {
         const payrollAcc = account as TSPayrollAccount;
         return (
           <>
             {payrollAcc.employerName && <p className="text-sm">Employer: {payrollAcc.employerName}</p>}
-            {payrollAcc.annualIncome !== undefined && <p className="text-sm">Annual Income: {formatCurrency(payrollAcc.annualIncome, account.currency)}</p>}
-            {payrollAcc.payFrequency && <p className="text-xs text-muted-foreground">Frequency: {payrollAcc.payFrequency}</p>}
+            <p className="text-sm">Annual Income: {formatCurrency(payrollAcc.annual_income, account.currency)}</p>
+            <p className="text-sm">Net Income (last period): {formatCurrency(payrollAcc.net_income, account.currency)}</p>
+            <p className="text-xs text-muted-foreground">Frequency: {payrollAcc.pay_frequency}</p>
           </>
         );
-       case 'Other':
+      }
+       case 'Other': {
         const otherAcc = account as TSOtherAccount;
         return (
           <>
-            {otherAcc.totalAssetValue !== undefined && <p className="text-sm">Total Assets: {formatCurrency(otherAcc.totalAssetValue, account.currency)}</p>}
-            {otherAcc.totalLiabilityValue !== undefined && <p className="text-sm">Total Liabilities: {formatCurrency(otherAcc.totalLiabilityValue, account.currency)}</p>}
+            <p className="text-sm">Total Income/Assets: {formatCurrency(otherAcc.total_income, account.currency)}</p>
+            <p className="text-sm">Total Debt/Liabilities: {formatCurrency(otherAcc.total_debt, account.currency)}</p>
           </>
         );
+       }
       default:
         return null;
     }
@@ -147,7 +204,7 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
           <div className="flex items-center gap-3">
             {VisualInfo && <VisualInfo.icon className="h-7 w-7 text-primary flex-shrink-0" />}
             <div>
-              <CardTitle className="text-lg leading-tight"> {/* Adjusted size */}
+              <CardTitle className="text-lg leading-tight">
                 {account.name}
               </CardTitle>
               <CardDescription className="text-xs">{account.type} Account</CardDescription>
@@ -158,7 +215,7 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex-grow space-y-1.5 pt-2 text-sm"> {/* Smaller spacing */}
+      <CardContent className="flex-grow space-y-1.5 pt-2 text-sm">
         {renderAccountSpecificDetails()}
         {account.description && (
           <p className="text-xs text-muted-foreground italic pt-1.5 border-t border-border/50 mt-2">{account.description}</p>

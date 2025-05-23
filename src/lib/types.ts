@@ -1,158 +1,166 @@
 
-// Keep existing AssetDistribution for UI simplicity in forms and cards
+// Client-side representation of Python's AssetDistribution, with an added ID for React keys
 export interface AssetDistribution {
-  id: string; // UUID
-  name: string; // e.g., Ticker symbol or fund name
-  percentage: number; // Percentage of total holdings for this asset
+  id: string; // Client-side generated UUID for React keys
+  ticker: string;
+  quantity: number;
+  average_cost_basis: number;
 }
 
-// New supporting types from Python models
 export interface BillingCycleTransaction {
-  id: string; // Added for list key
-  date: string; // ISO Date string
-  description: string;
+  id: string; // Added for list key, though source Python doesn't have it. Assuming client-side need.
+  // Python model only has amount, category. Date, description can be added if needed for UI.
+  // For now, let's assume we only store what Python has for the list, and summarize.
   amount: number;
   category: string;
 }
 
 export interface CheckingOrSavingsAccountFee {
-  noMinimumBalanceFee?: number;
-  monthlyFee?: number;
-  atmFee?: number;
-  overdraftFee?: number;
+  no_minimum_balance_fee: number;
+  monthly_fee: number;
+  atm_fee: number; // Python uses ATM_fee, will keep camelCase for TS consistency: atmFee
+  overdraft_fee: number;
 }
 
 export interface LoanFee {
-  lateFee?: number;
-  prepaymentPenalty?: number;
-  originationFee?: number;
-  otherFees?: number;
+  late_fee: number;
+  prepayment_penalty: number;
+  origination_fee: number;
+  other_fees: number;
 }
 
 // Base for all accounts
 export interface BaseAccount {
   id: string; // UUID
-  name:string;
-  type: AccountType; // This will be the expanded list
-  balance: number; // Standardized balance figure for display
+  name: string;
+  type: AccountType;
+  balance: number; // Standardized balance figure for display, derived from specific fields
   currency: string; // e.g., USD, EUR
-  description?: string; // General description, moved to base
+  description?: string; // General description, kept optional as it's often not in Python models' core
 }
 
 // Specific Account Types based on Python models
 export interface TSInvestmentAccount extends BaseAccount {
   type: 'Investment';
-  uninvestedAmount?: number; // This will be primary value for 'balance'
-  holdings?: AssetDistribution[];
+  uninvested_amount: number;
+  assest_distribution: AssetDistribution[]; // Corrected name from Python
 }
 
 export interface TSHSAAccount extends BaseAccount {
   type: 'HSA';
-  averageMonthlyContribution?: number;
-  uninvestedAmount?: number; // This will be primary value for 'balance'
-  holdings?: AssetDistribution[];
+  average_monthly_contribution: number;
+  uninvested_amount: number;
+  assest_distribution: AssetDistribution[]; // Corrected name
 }
 
 export interface TSTraditionalIRAAccount extends BaseAccount {
   type: 'Traditional IRA';
-  uninvestedAmount?: number; // This will be primary value for 'balance'
-  averageMonthlyContribution?: number;
-  holdings?: AssetDistribution[];
+  uninvested_amount: number;
+  average_monthly_contribution: number;
+  assest_distribution: AssetDistribution[]; // Corrected name
 }
 
 export interface TSRothIRAAccount extends BaseAccount {
   type: 'Roth IRA';
-  uninvestedAmount?: number; // This will be primary value for 'balance'
-  averageMonthlyContribution?: number;
-  holdings?: AssetDistribution[];
+  uninvested_amount: number;
+  average_monthly_contribution: number;
+  assest_distribution: AssetDistribution[]; // Corrected name
 }
 
 export interface TSRetirement401kAccount extends BaseAccount {
   type: 'Retirement 401k';
-  averageMonthlyContribution?: number;
-  uninvestedAmount?: number; // This will be primary value for 'balance'
-  holdings?: AssetDistribution[];
-  employerMatch?: string; // e.g., "50% up to 6%"
+  average_monthly_contribution: number;
+  uninvested_amount: number;
+  assest_distribution: AssetDistribution[]; // Corrected name
+  employer_match: string;
 }
 
 export interface TSRoth401kAccount extends BaseAccount {
   type: 'Roth 401k';
-  averageMonthlyContribution?: number;
-  uninvestedAmount?: number; // This will be primary value for 'balance'
-  holdings?: AssetDistribution[];
-  employerMatch?: string;
+  average_monthly_contribution: number;
+  uninvested_amount: number;
+  assest_distribution: AssetDistribution[]; // Corrected name
+  employer_match: string;
 }
 
 export interface TSCreditCardAccount extends BaseAccount {
   type: 'Credit Card';
-  totalLimit?: number;
-  availableCredit?: number; // Calculated as totalLimit - outstandingDebt
-  rewardsSummary?: string;
-  interestRate?: number;
-  outstandingDebt?: number; // This will be primary value for 'balance' (negative)
-  // currentBillingCycleTransactions?: BillingCycleTransaction[]; // Simplified for now
-  transactionsSummary?: string; // Placeholder for complex transaction list
-  annualFee?: number;
-  dueDate?: string; // ISO date string
+  total_limit: number;
+  current_limit: number; // Python: current_limit, was availableCredit in TS
+  rewards_summary: string;
+  interest: number; // Python: interest
+  outstanding_debt: number;
+  current_billing_cycle_transactions: BillingCycleTransaction[]; // Actual list, though form might summarize
+  annual_fee?: number; // Python: Optional[float] = 0.0
+  // Fields not in Python model explicitly but useful from previous TS, keeping optional if used:
+  dueDate?: string; 
   cardNumberLast4?: string;
+  transactionsSummary?: string; // If current_billing_cycle_transactions is too complex for direct form input
 }
 
 export interface TSCheckingOrSavingsAccount extends BaseAccount {
   type: 'Checking/Savings';
-  // currentAmount is 'balance'
-  rewardsSummary?: string;
-  interestRate?: number;
-  overdraftProtection?: string; // e.g., "Enabled", "Disabled", "Linked Account"
-  minimumBalanceRequirement?: number;
-  fees?: CheckingOrSavingsAccountFee;
-  // currentBillingCycleTransactions?: BillingCycleTransaction[]; // Simplified for now
-  transactionsSummary?: string; // Placeholder
+  current_amount: number; // Python: current_amount
+  rewards_summary: string;
+  interest: number; // Python: interest
+  overdraft_protection: string;
+  minimum_balance_requirement: number;
+  fee: CheckingOrSavingsAccountFee; // Python: fee
+  current_billing_cycle_transactions: BillingCycleTransaction[]; // Actual list
+  // Fields not in Python model explicitly but useful from previous TS, keeping optional if used:
   accountNumberLast4?: string;
   bankName?: string;
+  transactionsSummary?: string; // If current_billing_cycle_transactions is too complex
 }
 
 export interface TSLoanAccount extends BaseAccount {
   type: 'Loan';
-  // principalLeft or outstandingBalance is 'balance' (negative)
-  interestRate?: number;
-  monthlyContribution?: number;
-  loanTerm?: string; // e.g., "30 years", "60 months"
-  loanStartDate?: string; // ISO Date
-  loanEndDate?: string; // ISO Date
-  totalPaidToDate?: number;
-  nextPaymentDueDate?: string; // ISO Date
-  // paymentHistory?: Array<Record<string, any>>; // Simplified for now
-  paymentHistorySummary?: string; // Placeholder
-  loanType?: string; // e.g., "Mortgage", "Auto", "Student"
-  collateral?: string;
-  currentOutstandingFees?: LoanFee;
-  originalAmount?: number;
+  principal_left: number; // Python: principal_left
+  interest_rate: number; // Python: interest_rate (used this in Py, will stick to it)
+  monthly_contribution: number;
+  loan_term: string;
+  loan_start_date: string; // ISO Date
+  loan_end_date: string; // ISO Date
+  outstanding_balance: number; // Python has this, might be redundant if principal_left is primary
+  total_paid: number; // Python: total_paid
+  payment_due_date: string; // Python: payment_due_date
+  payment_history: Array<Record<string, any>>; // Kept generic as per Python
+  loan_type: string;
+  collateral?: string; // Python: Optional[str] = None
+  current_outstanding_fees: LoanFee;
+  other_payments: Array<Record<string, any>>; // Python: list[dict[str, str | float]] - simplified generic for TS
+  // Fields not in Python model explicitly but useful from previous TS, keeping optional if used:
+  paymentHistorySummary?: string; // if payment_history is too complex for form
+  originalAmount?: number; // Useful for progress calculation
 }
 
 export interface TSPayrollAccount extends BaseAccount {
   type: 'Payroll';
-  // netIncome for last period is 'balance'
-  annualIncome?: number;
-  federalTaxesWithheld?: number;
-  stateOfWork?: string;
-  stateTaxesWithheld?: number;
-  socialSecurityWithheld?: number;
-  medicareWithheld?: number;
-  otherDeductions?: number;
-  payPeriodStartDate?: string; // ISO Date
-  payPeriodEndDate?: string; // ISO Date
-  payFrequency?: string; // e.g., "Bi-weekly", "Monthly"
-  benefitsSummary?: string;
-  bonusIncome?: number;
-  yearToDateIncome?: number;
-  employerName?: string;
+  annual_income: number;
+  federal_taxes_withheld: number;
+  state: string; // Python: state
+  state_taxes_withheld: number;
+  social_security_withheld: number;
+  medicare_withheld: number;
+  other_deductions: number;
+  net_income: number; // Python: net_income
+  pay_period_start_date: string;
+  pay_period_end_date: string;
+  pay_frequency: string;
+  benefits: string; // Python: benefits
+  bonus_income: number;
+  year_to_date_income: number;
+  // Fields not in Python model explicitly but useful from previous TS, keeping optional if used:
+  employerName?: string; 
+  benefitsSummary?: string; // if 'benefits' string is not enough
 }
 
 export interface TSOtherAccount extends BaseAccount {
   type: 'Other';
-  // totalIncome - totalDebt could be 'balance'
-  totalAssetValue?: number; // Changed from totalIncome
-  totalLiabilityValue?: number; // Changed from totalDebt
+  total_income: number; // Python: total_income
+  total_debt: number; // Python: total_debt
+  // Previous TS had totalAssetValue, totalLiabilityValue. Python has total_income, total_debt.
+  // Sticking to Python model for data structure.
 }
 
 // Union of all specific account types
@@ -171,7 +179,7 @@ export type Account =
 
 // Literal type for AccountType strings
 export const ACCOUNT_TYPES_ENUM = [
-  'Investment', // Generic Investment
+  'Investment',
   'HSA',
   'Traditional IRA',
   'Roth IRA',
@@ -186,7 +194,6 @@ export const ACCOUNT_TYPES_ENUM = [
 
 export type AccountType = (typeof ACCOUNT_TYPES_ENUM)[number];
 
-// Make sure ACCOUNT_TYPES array matches AccountType
 export const ACCOUNT_TYPES: AccountType[] = [...ACCOUNT_TYPES_ENUM];
 
 export const ACCOUNT_TYPE_EMOJIS: Record<AccountType, string> = {
@@ -203,7 +210,6 @@ export const ACCOUNT_TYPE_EMOJIS: Record<AccountType, string> = {
   'Other': "🧾",
 };
 
-// Ensure ChatMessage type is still here
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'bot';

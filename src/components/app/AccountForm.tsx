@@ -52,7 +52,6 @@ const billingCycleTransactionSchema = z.object({
   id: z.string().optional(), // Client-side UUID
   amount: z.coerce.number(),
   category: z.string().min(1, "Category is required"),
-  // For full form, would add date, description. For now, assuming these are summarized.
 });
 
 // Schema for Checking/Savings Account Fees
@@ -78,14 +77,13 @@ const baseAccountSchema = z.object({
   name: z.string().min(1, 'Account name is required'),
   type: z.enum(ACCOUNT_TYPES, { required_error: 'Account type is required' }),
   currency: z.string().min(3, 'Currency code is required (e.g., USD)').max(3).default('USD'),
-  description: z.string().optional(),
   // balance is NOT in base Zod schema; it's calculated and added to final Account object
 });
 
 // Schemas for Investment-like accounts
 const investmentRelatedFeaturesBase = {
   uninvested_amount: z.coerce.number({ required_error: "Uninvested amount is required" }),
-  assest_distribution: z.array(assetDistributionSchema).min(0, "Asset distribution list cannot be null"), // Python: assest_distribution
+  assest_distribution: z.array(assetDistributionSchema).min(0, "Asset distribution list cannot be null"),
 };
 
 const tsInvestmentAccountSchema = baseAccountSchema.extend({
@@ -117,11 +115,8 @@ const tsCreditCardAccountSchema = baseAccountSchema.extend({
   rewards_summary: z.string().min(1, "Rewards summary is required"),
   interest: z.coerce.number({ required_error: "Interest rate is required" }),
   outstanding_debt: z.coerce.number({ required_error: "Outstanding debt is required" }),
-  current_billing_cycle_transactions: z.array(billingCycleTransactionSchema).min(0), // Kept as array, form might simplify
-  annual_fee: z.coerce.number().optional().default(0), // Python: Optional[float] = 0.0
-  dueDate: z.string().optional(), // Not in Python model, kept optional from previous version
-  cardNumberLast4: z.string().max(4).optional(), // Not in Python model, kept optional
-  transactionsSummary: z.string().optional(), // For UI simplification if array is too much
+  current_billing_cycle_transactions: z.array(billingCycleTransactionSchema).min(0), // Kept as array
+  annual_fee: z.coerce.number().default(0), // Python: Optional[float] = 0.0, non-optional in TS so must have default
 });
 
 // Schema for Checking/Savings Account
@@ -134,9 +129,6 @@ const tsCheckingOrSavingsAccountSchema = baseAccountSchema.extend({
   minimum_balance_requirement: z.coerce.number({ required_error: "Minimum balance requirement is required" }),
   fee: checkingOrSavingsAccountFeeSchema,
   current_billing_cycle_transactions: z.array(billingCycleTransactionSchema).min(0),
-  accountNumberLast4: z.string().max(4).optional(), // Not in Python, kept optional
-  bankName: z.string().optional(), // Not in Python, kept optional
-  transactionsSummary: z.string().optional(), // For UI simplification
 });
 
 // Schema for Loan Account
@@ -146,9 +138,9 @@ const tsLoanAccountSchema = baseAccountSchema.extend({
   interest_rate: z.coerce.number({ required_error: "Interest rate is required" }),
   monthly_contribution: z.coerce.number({ required_error: "Monthly contribution is required" }),
   loan_term: z.string().min(1, "Loan term is required"),
-  loan_start_date: z.string().min(1, "Loan start date is required"), // Consider date picker
-  loan_end_date: z.string().min(1, "Loan end date is required"),   // Consider date picker
-  outstanding_balance: z.coerce.number({required_error: "Outstanding balance is required"}), // Python has this.
+  loan_start_date: z.string().min(1, "Loan start date is required"),
+  loan_end_date: z.string().min(1, "Loan end date is required"),
+  outstanding_balance: z.coerce.number({required_error: "Outstanding balance is required"}),
   total_paid: z.coerce.number({required_error: "Total paid to date is required"}),
   payment_due_date: z.string().min(1, "Payment due date is required"),
   payment_history: z.array(z.record(z.any())).min(0), // Kept generic
@@ -156,8 +148,6 @@ const tsLoanAccountSchema = baseAccountSchema.extend({
   collateral: z.string().optional(), // Python: Optional[str] = None
   current_outstanding_fees: loanFeeSchema,
   other_payments: z.array(z.record(z.any())).min(0), // Kept generic
-  paymentHistorySummary: z.string().optional(), // For UI simplification
-  originalAmount: z.coerce.number().optional(), // Not in Python, kept optional for UI
 });
 
 // Schema for Payroll Account
@@ -169,7 +159,7 @@ const tsPayrollAccountSchema = baseAccountSchema.extend({
   state_taxes_withheld: z.coerce.number({ required_error: "State taxes withheld is required" }),
   social_security_withheld: z.coerce.number({ required_error: "Social Security withheld is required" }),
   medicare_withheld: z.coerce.number({ required_error: "Medicare withheld is required" }),
-  other_deductions: z.coerce.number({ required_error: "Other deductions are required" }),
+  other_deductions: z.coerce.number({ required_error: "Other deductions is required" }),
   net_income: z.coerce.number({ required_error: "Net income for pay period is required" }),
   pay_period_start_date: z.string().min(1, "Pay period start date is required"),
   pay_period_end_date: z.string().min(1, "Pay period end date is required"),
@@ -177,8 +167,6 @@ const tsPayrollAccountSchema = baseAccountSchema.extend({
   benefits: z.string().min(1, "Benefits summary is required"),
   bonus_income: z.coerce.number({ required_error: "Bonus income is required (can be 0)" }),
   year_to_date_income: z.coerce.number({ required_error: "Year-to-date income is required" }),
-  employerName: z.string().optional(), // Not in Python, kept optional
-  benefitsSummary: z.string().optional(), // if 'benefits' field is not enough
 });
 
 // Schema for Other Account
@@ -225,7 +213,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     const base = {
       name: '',
       currency: 'USD',
-      description: '',
       // Investment-like
       uninvested_amount: 0,
       assest_distribution: [],
@@ -237,7 +224,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       rewards_summary: '',
       interest: 0, // for CC and C/S
       outstanding_debt: 0,
-      current_billing_cycle_transactions: [], // Simplified for default
+      current_billing_cycle_transactions: [], 
       annual_fee: 0,
       // Checking/Savings
       current_amount: 0,
@@ -254,10 +241,11 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       outstanding_balance: 0,
       total_paid: 0,
       payment_due_date: '',
-      payment_history: [], // Simplified
+      payment_history: [], 
       loan_type: '',
+      collateral: '', // Optional in Python, so can default to empty string or handle as undefined
       current_outstanding_fees: { late_fee: 0, prepayment_penalty: 0, origination_fee: 0, other_fees: 0 },
-      other_payments: [], // Simplified
+      other_payments: [], 
       // Payroll
       annual_income: 0,
       federal_taxes_withheld: 0,
@@ -278,21 +266,20 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       total_debt: 0,
     };
     if (account) {
-      // Spreading accountToEdit might bring the 'balance' field which is not in AccountFormData.
-      // So, we explicitly pick fields.
-      const { balance, id, ...restOfAccountToEdit } = account; // Exclude balance and id from spreading directly
+      const { balance, id, ...restOfAccountToEdit } = account; 
       return {
-        ...base, // Start with base defaults
-        type: account.type, // Set type first
-        ...restOfAccountToEdit, // Spread the actual data
-        // Ensure array fields are defaulted if not present in restOfAccountToEdit
+        ...base, 
+        type: account.type, 
+        ...restOfAccountToEdit, 
+        annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0, // Ensure default if undefined
+        collateral: (account as TSLoanAccount).collateral ?? '', // Ensure default if undefined
         assest_distribution: (account as any).assest_distribution || [],
         current_billing_cycle_transactions: (account as any).current_billing_cycle_transactions || [],
         payment_history: (account as any).payment_history || [],
         other_payments: (account as any).other_payments || [],
-      } as AccountFormData; // Cast because we're building it carefully
+      } as AccountFormData; 
     }
-    return { ...base, type: 'Checking/Savings' } as AccountFormData; // Default new account type
+    return { ...base, type: 'Checking/Savings' } as AccountFormData; 
   };
   
 
@@ -302,15 +289,14 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
   });
   
   const { fields: assetFields, append: appendAsset, remove: removeAsset } = useFieldArray({
-    control: form.control as Control<AccountFormData & { assest_distribution?: AssetDistribution[] }>, // Adjusted type
-    name: "assest_distribution" as 'assest_distribution', // Corrected name
+    control: form.control as Control<AccountFormData & { assest_distribution?: AssetDistribution[] }>, 
+    name: "assest_distribution" as 'assest_distribution', 
   });
 
   useEffect(() => {
     form.reset(getDefaultValues(accountToEdit));
      if (accountToEdit && ['Investment', 'HSA', 'Traditional IRA', 'Roth IRA', 'Retirement 401k', 'Roth 401k'].includes(accountToEdit.type)) {
         const currentAssets = (accountToEdit as any).assest_distribution || [];
-        // Reset and then set value for array fields to ensure reactivity with useFieldArray
         form.setValue('assest_distribution', []); 
         form.setValue('assest_distribution', currentAssets as AssetDistribution[]);
     } else {
@@ -325,13 +311,11 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     let calculatedBalance = 0;
     const accountId = accountToEdit?.id || crypto.randomUUID();
     
-    // Base data common to all, ensuring ID is present
     const baseData = { 
         id: accountId, 
         name: data.name, 
         type: data.type, 
         currency: data.currency, 
-        description: data.description 
     };
 
     let specificData: Omit<Account, keyof typeof baseData | 'balance'>;
@@ -369,11 +353,8 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             rewards_summary: data.rewards_summary,
             interest: data.interest,
             outstanding_debt: data.outstanding_debt,
-            current_billing_cycle_transactions: data.current_billing_cycle_transactions, // Assuming form handles this
+            current_billing_cycle_transactions: data.current_billing_cycle_transactions, 
             annual_fee: data.annual_fee,
-            ...(data.dueDate && { dueDate: data.dueDate }), // Keep if form has these optional fields
-            ...(data.cardNumberLast4 && { cardNumberLast4: data.cardNumberLast4 }),
-            ...(data.transactionsSummary && { transactionsSummary: data.transactionsSummary }),
         };
         break;
       case 'Checking/Savings':
@@ -385,10 +366,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             overdraft_protection: data.overdraft_protection,
             minimum_balance_requirement: data.minimum_balance_requirement,
             fee: data.fee,
-            current_billing_cycle_transactions: data.current_billing_cycle_transactions, // Assuming form handles this
-             ...(data.accountNumberLast4 && { accountNumberLast4: data.accountNumberLast4 }),
-            ...(data.bankName && { bankName: data.bankName }),
-            ...(data.transactionsSummary && { transactionsSummary: data.transactionsSummary }),
+            current_billing_cycle_transactions: data.current_billing_cycle_transactions,
         };
         break;
       case 'Loan':
@@ -403,13 +381,11 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             outstanding_balance: data.outstanding_balance,
             total_paid: data.total_paid,
             payment_due_date: data.payment_due_date,
-            payment_history: data.payment_history, // Assuming form handles this
+            payment_history: data.payment_history, 
             loan_type: data.loan_type,
-            collateral: data.collateral,
+            ...(data.collateral && {collateral: data.collateral}), // only add if present
             current_outstanding_fees: data.current_outstanding_fees,
-            other_payments: data.other_payments, // Assuming form handles this
-            ...(data.paymentHistorySummary && { paymentHistorySummary: data.paymentHistorySummary }),
-            ...(data.originalAmount && { originalAmount: data.originalAmount }),
+            other_payments: data.other_payments, 
         };
         break;
       case 'Payroll':
@@ -429,8 +405,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             benefits: data.benefits,
             bonus_income: data.bonus_income,
             year_to_date_income: data.year_to_date_income,
-            ...(data.employerName && { employerName: data.employerName }),
-            ...(data.benefitsSummary && { benefitsSummary: data.benefitsSummary }),
         };
         break;
       case 'Other':
@@ -438,7 +412,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         specificData = { total_income: data.total_income, total_debt: data.total_debt };
         break;
       default:
-        // Should not happen with discriminated union, but as a fallback:
         throw new Error("Invalid account type for data preparation");
     }
     return { ...baseData, balance: calculatedBalance, ...specificData } as Account;
@@ -449,14 +422,14 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     try {
       const finalAccountObject = prepareDataForSubmit(data);
       if (accountToEdit) {
-        editAccount(finalAccountObject); // editAccount expects full Account object with id
+        editAccount(finalAccountObject); 
         toast({ title: "Success", description: "Account updated successfully." });
       } else {
-        addAccount(finalAccountObject); // addAccount can also take full Account object
+        addAccount(finalAccountObject); 
         toast({ title: "Success", description: "Account added successfully." });
       }
       onOpenChange(false);
-      form.reset(getDefaultValues()); // Reset to blank form defaults
+      form.reset(getDefaultValues()); 
     } catch (error) {
       console.error("Submission error", error);
       toast({ title: "Error", description: `Failed to save account. ${error instanceof Error ? error.message : ''}`, variant: "destructive" });
@@ -466,12 +439,9 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
   const handleJsonSubmit = () => {
     try {
       const parsedJson = JSON.parse(jsonInput);
-      // We need to validate against the AccountFormData schema (which doesn't include 'balance' directly)
       const validationResult = accountFormSchema.safeParse(parsedJson);
       if (validationResult.success) {
         setJsonError(null);
-        // The validated data (AccountFormData) is then passed to onSubmit,
-        // which uses prepareDataForSubmit to construct the final Account object with calculated balance.
         onSubmit(validationResult.data); 
       } else {
         const errorMsg = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -498,9 +468,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         )} />
       <FormField control={form.control} name="currency" render={({ field }) => (
           <FormItem><FormLabel>Currency</FormLabel><FormControl><Input placeholder="USD" {...field} /></FormControl><FormMessage /></FormItem>
-        )} />
-      <FormField control={form.control} name="description" render={({ field }) => (
-          <FormItem><FormLabel>Description (Optional)</FormLabel><FormControl><Textarea placeholder="Any notes about this account" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
         )} />
     </>
   );
@@ -544,19 +511,14 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       <FormField control={form.control} name="current_limit" render={({ field }) => ( <FormItem><FormLabel>Current Available Limit</FormLabel><FormControl><Input type="number" placeholder="3800" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="interest" render={({ field }) => ( <FormItem><FormLabel>Interest Rate (APR %)</FormLabel><FormControl><Input type="number" placeholder="19.99" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="rewards_summary" render={({ field }) => ( <FormItem><FormLabel>Rewards Summary</FormLabel><FormControl><Textarea placeholder="E.g., 2% cashback on travel" {...field} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="annual_fee" render={({ field }) => ( <FormItem><FormLabel>Annual Fee (Optional)</FormLabel><FormControl><Input type="number" placeholder="95" {...field} value={field.value ?? 0} /></FormControl><FormMessage /></FormItem> )} />
-      {/* For current_billing_cycle_transactions, a full array input is complex. Simplified to summary or not shown. */}
-       <FormField control={form.control} name="transactionsSummary" render={({ field }) => ( <FormItem><FormLabel>Recent Transactions Note (Optional, if not detailing all)</FormLabel><FormControl><Textarea placeholder="Summary of recent spending activity" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="cardNumberLast4" render={({ field }) => ( <FormItem><FormLabel>Card Number (Last 4, Optional)</FormLabel><FormControl><Input placeholder="1234" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="dueDate" render={({ field }) => ( <FormItem><FormLabel>Payment Due Date (Optional)</FormLabel><FormControl><Input type="date" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+      <FormField control={form.control} name="annual_fee" render={({ field }) => ( <FormItem><FormLabel>Annual Fee</FormLabel><FormControl><Input type="number" placeholder="95" {...field} value={field.value ?? 0} /></FormControl><FormMessage /></FormItem> )} />
+      {/* For current_billing_cycle_transactions, a full array input is complex. Will be empty array by default. */}
     </>
   );
   
   const renderCheckingSavingsFields = () => (
     <>
       <FormField control={form.control} name="current_amount" render={({ field }) => ( <FormItem><FormLabel>Current Amount</FormLabel><FormControl><Input type="number" placeholder="5000.00" {...field} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="bankName" render={({ field }) => ( <FormItem><FormLabel>Bank Name (Optional)</FormLabel><FormControl><Input placeholder="E.g., Chase" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="accountNumberLast4" render={({ field }) => ( <FormItem><FormLabel>Account Number (Last 4, Optional)</FormLabel><FormControl><Input placeholder="5678" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="interest" render={({ field }) => ( <FormItem><FormLabel>Interest Rate (APY %)</FormLabel><FormControl><Input type="number" placeholder="0.5" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="rewards_summary" render={({ field }) => ( <FormItem><FormLabel>Rewards Summary</FormLabel><FormControl><Textarea placeholder="E.g., $200 bonus for new account" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="overdraft_protection" render={({ field }) => ( <FormItem><FormLabel>Overdraft Protection</FormLabel><FormControl><Input placeholder="E.g., Enabled, Linked to Savings" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -569,14 +531,13 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         <FormField control={form.control} name="fee.overdraft_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Overdraft Fee</FormLabel><FormControl><Input type="number" placeholder="35" {...field} /></FormControl><FormMessage /></FormItem> )} />
         <FormField control={form.control} name="fee.no_minimum_balance_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Min. Balance Fee</FormLabel><FormControl><Input type="number" placeholder="12" {...field} /></FormControl><FormMessage /></FormItem> )} />
       </div>
-       <FormField control={form.control} name="transactionsSummary" render={({ field }) => ( <FormItem><FormLabel>Recent Transactions Note (Optional, if not detailing all)</FormLabel><FormControl><Textarea placeholder="Summary of recent activity" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+      {/* For current_billing_cycle_transactions, a full array input is complex. Will be empty array by default. */}
     </>
   );
 
   const renderLoanFields = () => (
     <>
       <FormField control={form.control} name="principal_left" render={({ field }) => ( <FormItem><FormLabel>Principal Left</FormLabel><FormControl><Input type="number" placeholder="180000" {...field} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="originalAmount" render={({ field }) => ( <FormItem><FormLabel>Original Loan Amount (Optional, for UI)</FormLabel><FormControl><Input type="number" placeholder="250000" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="interest_rate" render={({ field }) => ( <FormItem><FormLabel>Interest Rate (%)</FormLabel><FormControl><Input type="number" placeholder="3.75" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="monthly_contribution" render={({ field }) => ( <FormItem><FormLabel>Monthly Payment</FormLabel><FormControl><Input type="number" placeholder="1200" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="loan_type" render={({ field }) => ( <FormItem><FormLabel>Loan Type (e.g., Mortgage, Auto)</FormLabel><FormControl><Input placeholder="Mortgage" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -584,7 +545,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       <FormField control={form.control} name="loan_start_date" render={({ field }) => ( <FormItem><FormLabel>Loan Start Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="loan_end_date" render={({ field }) => ( <FormItem><FormLabel>Loan End Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="payment_due_date" render={({ field }) => ( <FormItem><FormLabel>Next Payment Due Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="outstanding_balance" render={({ field }) => ( <FormItem><FormLabel>Outstanding Balance (as per Python)</FormLabel><FormControl><Input type="number" placeholder="180000" {...field} /></FormControl><FormMessage /></FormItem> )} />
+      <FormField control={form.control} name="outstanding_balance" render={({ field }) => ( <FormItem><FormLabel>Outstanding Balance</FormLabel><FormControl><Input type="number" placeholder="180000" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="total_paid" render={({ field }) => ( <FormItem><FormLabel>Total Paid to Date</FormLabel><FormControl><Input type="number" placeholder="70000" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="collateral" render={({ field }) => ( <FormItem><FormLabel>Collateral (Optional)</FormLabel><FormControl><Input placeholder="E.g., Property address" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
       
@@ -595,19 +556,17 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         <FormField control={form.control} name="current_outstanding_fees.origination_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Origination Fee</FormLabel><FormControl><Input type="number" placeholder="500" {...field} /></FormControl><FormMessage /></FormItem> )} />
         <FormField control={form.control} name="current_outstanding_fees.other_fees" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Other Fees</FormLabel><FormControl><Input type="number" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem> )} />
       </div>
-      {/* payment_history and other_payments are arrays of records, complex for direct form. Simplified. */}
-      <FormField control={form.control} name="paymentHistorySummary" render={({ field }) => ( <FormItem><FormLabel>Payment History Note (Optional)</FormLabel><FormControl><Textarea placeholder="Summary of payment history" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+      {/* payment_history and other_payments are arrays, not directly editable as simple form fields currently */}
     </>
   );
 
   const renderPayrollFields = () => (
     <>
-      <FormField control={form.control} name="employerName" render={({ field }) => ( <FormItem><FormLabel>Employer Name (Optional)</FormLabel><FormControl><Input placeholder="E.g., Acme Corp" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="annual_income" render={({ field }) => ( <FormItem><FormLabel>Annual Income (Gross)</FormLabel><FormControl><Input type="number" placeholder="75000" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="net_income" render={({ field }) => ( <FormItem><FormLabel>Net Income (Last Pay Period)</FormLabel><FormControl><Input type="number" placeholder="2500" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="pay_frequency" render={({ field }) => ( <FormItem><FormLabel>Pay Frequency</FormLabel><FormControl><Input placeholder="E.g., Bi-weekly, Monthly" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="year_to_date_income" render={({ field }) => ( <FormItem><FormLabel>Year-to-Date Income (Gross)</FormLabel><FormControl><Input type="number" placeholder="30000" {...field} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="bonus_income" render={({ field }) => ( <FormItem><FormLabel>Bonus Income (Annual, can be 0)</FormLabel><FormControl><Input type="number" placeholder="5000" {...field} /></FormControl><FormMessage /></FormItem> )} />
+      <FormField control={form.control} name="bonus_income" render={({ field }) => ( <FormItem><FormLabel>Bonus Income (Annual)</FormLabel><FormControl><Input type="number" placeholder="5000" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="pay_period_start_date" render={({ field }) => ( <FormItem><FormLabel>Last Pay Period Start Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="pay_period_end_date" render={({ field }) => ( <FormItem><FormLabel>Last Pay Period End Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem> )} />
       
@@ -621,7 +580,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         <FormField control={form.control} name="other_deductions" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Other Deductions</FormLabel><FormControl><Input type="number" placeholder="50" {...field} /></FormControl><FormMessage /></FormItem> )} />
       </div>
       <FormField control={form.control} name="benefits" render={({ field }) => ( <FormItem><FormLabel>Benefits Description</FormLabel><FormControl><Textarea placeholder="E.g., Health Insurance, 401k plan details" {...field} /></FormControl><FormMessage /></FormItem> )} />
-      <FormField control={form.control} name="benefitsSummary" render={({ field }) => ( <FormItem><FormLabel>Benefits Summary (Optional, if 'benefits' field is main one)</FormLabel><FormControl><Textarea placeholder="Brief summary of benefits" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
     </>
   );
 

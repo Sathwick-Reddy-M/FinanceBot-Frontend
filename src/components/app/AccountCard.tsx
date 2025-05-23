@@ -31,7 +31,7 @@ const AccountTypeVisuals: Record<AccountType, { icon: React.ElementType, emoji: 
 
 export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
   const formatCurrency = (amount: number | undefined, currencyCode: string) => {
-    if (amount === undefined) return 'N/A'; // Should not happen if fields are required
+    if (amount === undefined) return 'N/A'; 
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(amount);
   };
 
@@ -134,8 +134,7 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
               </div>
             )}
             <p className="text-sm mt-1">APR: {ccAcc.interest}%</p>
-            {ccAcc.dueDate && <p className="text-xs text-muted-foreground">Due: {new Date(ccAcc.dueDate).toLocaleDateString()}</p>}
-            {ccAcc.annual_fee && ccAcc.annual_fee > 0 && <p className="text-sm">Annual Fee: {formatCurrency(ccAcc.annual_fee, account.currency)}</p>}
+            {ccAcc.annual_fee > 0 && <p className="text-sm">Annual Fee: {formatCurrency(ccAcc.annual_fee, account.currency)}</p>}
           </>
         );
       }
@@ -143,29 +142,31 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
         const csAcc = account as TSCheckingOrSavingsAccount;
         return (
           <>
-            {csAcc.bankName && <p className="text-sm">Bank: {csAcc.bankName}</p>}
             <p className="text-sm">Interest Rate: {csAcc.interest}% APY</p>
-            {csAcc.accountNumberLast4 && <p className="text-xs text-muted-foreground">Acc #: ******{csAcc.accountNumberLast4}</p>}
             <p className="text-sm">Min Balance: {formatCurrency(csAcc.minimum_balance_requirement, account.currency)}</p>
           </>
         );
       }
       case 'Loan': {
         const loanAcc = account as TSLoanAccount;
-        // originalAmount is optional in TS type (for UI) but not in Python. Assuming it exists for progress.
-        const loanPaidPercentage = loanAcc.originalAmount && loanAcc.principal_left ? ((loanAcc.originalAmount - Math.abs(loanAcc.principal_left)) / loanAcc.originalAmount) * 100 : 0;
+        // For loans, principal_left is negative, outstanding_balance could be used for original amount if defined
+        // For progress, let's assume total_paid relative to an original amount implied by principal_left + total_paid
+        // This is a simplification; a true original loan amount would be better.
+        const impliedOriginalAmount = Math.abs(loanAcc.principal_left) + loanAcc.total_paid;
+        const loanPaidPercentage = impliedOriginalAmount > 0 ? (loanAcc.total_paid / impliedOriginalAmount) * 100 : 0;
+        
         return (
           <>
             <p className="text-sm">Type: {loanAcc.loan_type}</p>
             <p className="text-sm">Interest Rate: {loanAcc.interest_rate}%</p>
-            {loanAcc.originalAmount && loanAcc.originalAmount > 0 && (
+            {impliedOriginalAmount > 0 && (
                <div>
                 <div className="flex justify-between text-xs mt-1 mb-0.5">
                   <span className="text-muted-foreground">Loan Paid:</span>
                   <span>{loanPaidPercentage > 0 ? loanPaidPercentage.toFixed(1) : 0}%</span>
                 </div>
                 <Progress value={loanPaidPercentage > 0 ? loanPaidPercentage : 0} className="h-1.5" />
-                <p className="text-xs text-muted-foreground mt-0.5 text-right">Original: {formatCurrency(loanAcc.originalAmount, account.currency)}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 text-right">Total Paid: {formatCurrency(loanAcc.total_paid, account.currency)}</p>
               </div>
             )}
             <p className="text-xs text-muted-foreground">Next Due: {new Date(loanAcc.payment_due_date).toLocaleDateString()}</p>
@@ -176,7 +177,6 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
         const payrollAcc = account as TSPayrollAccount;
         return (
           <>
-            {payrollAcc.employerName && <p className="text-sm">Employer: {payrollAcc.employerName}</p>}
             <p className="text-sm">Annual Income: {formatCurrency(payrollAcc.annual_income, account.currency)}</p>
             <p className="text-sm">Net Income (last period): {formatCurrency(payrollAcc.net_income, account.currency)}</p>
             <p className="text-xs text-muted-foreground">Frequency: {payrollAcc.pay_frequency}</p>
@@ -217,9 +217,6 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
       </CardHeader>
       <CardContent className="flex-grow space-y-1.5 pt-2 text-sm">
         {renderAccountSpecificDetails()}
-        {account.description && (
-          <p className="text-xs text-muted-foreground italic pt-1.5 border-t border-border/50 mt-2">{account.description}</p>
-        )}
       </CardContent>
       <CardFooter className="flex justify-end space-x-2 pt-3">
         <Button variant="outline" size="sm" onClick={() => onEdit(account)}>

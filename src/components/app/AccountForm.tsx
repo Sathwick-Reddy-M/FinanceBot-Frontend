@@ -58,7 +58,7 @@ const billingCycleTransactionSchema = z.object({
 const checkingOrSavingsAccountFeeSchema = z.object({
   no_minimum_balance_fee: z.coerce.number({ required_error: "No minimum balance fee is required" }),
   monthly_fee: z.coerce.number({ required_error: "Monthly fee is required" }),
-  atm_fee: z.coerce.number({ required_error: "ATM fee is required" }),
+  atm_fee: z.coerce.number({ required_error: "ATM fee is required" }), // Renamed from ATM_fee
   overdraft_fee: z.coerce.number({ required_error: "Overdraft fee is required" }),
 });
 
@@ -73,7 +73,7 @@ const loanFeeSchema = z.object({
 
 // Base Schema for all accounts
 const baseAccountSchema = z.object({
-  id: z.string().min(1, 'Account ID is required'), // Now required
+  id: z.string().min(1, 'Account ID is required'),
   name: z.string().min(1, 'Account name is required'),
   type: z.enum(ACCOUNT_TYPES, { required_error: 'Account type is required' }),
   currency: z.string().min(3, 'Currency code is required (e.g., USD)').max(3).default('USD'),
@@ -118,9 +118,8 @@ const tsCreditCardAccountSchema = baseAccountSchema.extend({
   annual_fee: z.coerce.number().default(0),
 });
 
-// Schema for Checking/Savings Account
-const tsCheckingOrSavingsAccountSchema = baseAccountSchema.extend({
-  type: z.literal('Checking/Savings'),
+// Shared fields for Checking and Savings
+const checkingAndSavingsFields = {
   current_amount: z.coerce.number({ required_error: "Current amount is required" }),
   rewards_summary: z.string().min(1, "Rewards summary is required"),
   interest: z.coerce.number({ required_error: "Interest rate is required" }),
@@ -128,7 +127,20 @@ const tsCheckingOrSavingsAccountSchema = baseAccountSchema.extend({
   minimum_balance_requirement: z.coerce.number({ required_error: "Minimum balance requirement is required" }),
   fee: checkingOrSavingsAccountFeeSchema,
   current_billing_cycle_transactions: z.array(billingCycleTransactionSchema).min(0),
+};
+
+// Schema for Checking Account
+const tsCheckingAccountSchema = baseAccountSchema.extend({
+  type: z.literal('Checking'),
+  ...checkingAndSavingsFields,
 });
+
+// Schema for Savings Account
+const tsSavingsAccountSchema = baseAccountSchema.extend({
+  type: z.literal('Savings'),
+  ...checkingAndSavingsFields,
+});
+
 
 // Schema for Loan Account
 const tsLoanAccountSchema = baseAccountSchema.extend({
@@ -137,16 +149,16 @@ const tsLoanAccountSchema = baseAccountSchema.extend({
   interest_rate: z.coerce.number({ required_error: "Interest rate is required" }),
   monthly_contribution: z.coerce.number({ required_error: "Monthly contribution is required" }),
   loan_term: z.string().min(1, "Loan term is required"),
-  loan_start_date: z.string().min(1, "Loan start date is required"),
-  loan_end_date: z.string().min(1, "Loan end date is required"),
+  loan_start_date: z.string().min(1, "Loan start date is required"), // Should be date
+  loan_end_date: z.string().min(1, "Loan end date is required"), // Should be date
   outstanding_balance: z.coerce.number({required_error: "Outstanding balance is required"}),
   total_paid: z.coerce.number({required_error: "Total paid to date is required"}),
-  payment_due_date: z.string().min(1, "Payment due date is required"),
-  payment_history: z.array(z.record(z.any())).min(0),
+  payment_due_date: z.string().min(1, "Payment due date is required"), // Should be date
+  payment_history: z.array(z.record(z.any())).min(0), // Simplified
   loan_type: z.string().min(1, "Loan type is required"),
   collateral: z.string().optional(),
   current_outstanding_fees: loanFeeSchema,
-  other_payments: z.array(z.record(z.any())).min(0),
+  other_payments: z.array(z.record(z.any())).min(0), // Simplified
 });
 
 // Schema for Payroll Account
@@ -160,8 +172,8 @@ const tsPayrollAccountSchema = baseAccountSchema.extend({
   medicare_withheld: z.coerce.number({ required_error: "Medicare withheld is required" }),
   other_deductions: z.coerce.number({ required_error: "Other deductions is required" }),
   net_income: z.coerce.number({ required_error: "Net income for pay period is required" }),
-  pay_period_start_date: z.string().min(1, "Pay period start date is required"),
-  pay_period_end_date: z.string().min(1, "Pay period end date is required"),
+  pay_period_start_date: z.string().min(1, "Pay period start date is required"), // Should be date
+  pay_period_end_date: z.string().min(1, "Pay period end date is required"), // Should be date
   pay_frequency: z.string().min(1, "Pay frequency is required"),
   benefits: z.string().min(1, "Benefits summary is required"),
   bonus_income: z.coerce.number({ required_error: "Bonus income is required (can be 0)" }),
@@ -185,7 +197,8 @@ const accountFormSchema = z.discriminatedUnion("type", [
   tsRetirement401kAccountSchema,
   tsRoth401kAccountSchema,
   tsCreditCardAccountSchema,
-  tsCheckingOrSavingsAccountSchema,
+  tsCheckingAccountSchema,   // Added
+  tsSavingsAccountSchema,    // Added
   tsLoanAccountSchema,
   tsPayrollAccountSchema,
   tsOtherAccountSchema,
@@ -272,7 +285,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         other_payments: (account as any).other_payments || [],
       } as AccountFormData; 
     }
-    return { ...base, type: 'Checking/Savings' } as AccountFormData; 
+    return { ...base, type: 'Checking' } as AccountFormData; // Default to Checking
   };
   
 
@@ -349,7 +362,8 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             annual_fee: data.annual_fee,
         };
         break;
-      case 'Checking/Savings':
+      case 'Checking': // Added case
+      case 'Savings':  // Added case
         calculatedBalance = data.current_amount;
         specificData = {
             current_amount: data.current_amount,
@@ -404,7 +418,9 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         specificData = { total_income: data.total_income, total_debt: data.total_debt };
         break;
       default:
-        throw new Error("Invalid account type for data preparation");
+        // This part should ideally be unreachable if types are exhaustive
+        const exhaustiveCheck: never = data.type; 
+        throw new Error(`Invalid account type for data preparation: ${exhaustiveCheck}`);
     }
     return { ...baseData, balance: calculatedBalance, ...specificData } as Account;
   };
@@ -421,7 +437,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         if (wasAdded) {
             toast({ title: "Success", description: "Account added successfully." });
         }
-        // If wasAdded is false, the alert about duplicate ID is handled in AccountContext
       }
       onOpenChange(false);
       form.reset(getDefaultValues()); 
@@ -513,7 +528,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     </>
   );
   
-  const renderCheckingSavingsFields = () => (
+  const renderCheckingOrSavingsFields = () => ( // Combined for Checking and Savings as fields are identical
     <>
       <FormField control={form.control} name="current_amount" render={({ field }) => ( <FormItem><FormLabel>Current Amount</FormLabel><FormControl><Input type="number" placeholder="5000.00" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="interest" render={({ field }) => ( <FormItem><FormLabel>Interest Rate (APY %)</FormLabel><FormControl><Input type="number" placeholder="0.5" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -605,7 +620,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
               {watchedAccountType === 'Retirement 401k' && renderInvestmentLikeFields(true, true)}
               {watchedAccountType === 'Roth 401k' && renderInvestmentLikeFields(true, true)}
               {watchedAccountType === 'Credit Card' && renderCreditCardFields()}
-              {watchedAccountType === 'Checking/Savings' && renderCheckingSavingsFields()}
+              {(watchedAccountType === 'Checking' || watchedAccountType === 'Savings') && renderCheckingOrSavingsFields()}
               {watchedAccountType === 'Loan' && renderLoanFields()}
               {watchedAccountType === 'Payroll' && renderPayrollFields()}
               {watchedAccountType === 'Other' && renderOtherFields()}
@@ -619,7 +634,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
           <div className="space-y-4">
             <Label htmlFor="json-input">Paste JSON data for the account</Label>
             <Textarea id="json-input" value={jsonInput} onChange={(e) => setJsonInput(e.target.value)} rows={12}
-              placeholder='{ "id": "user-provided-id", "name": "My Investment", "type": "Investment", "currency": "USD", "uninvested_amount": 1000, "asset_distribution": [{"ticker": "AAPL", "quantity": 10, "average_cost_basis": 150}], ... }' />
+              placeholder='{ "id": "user-provided-id", "name": "My Checking", "type": "Checking", "currency": "USD", "current_amount": 1000, ... }' />
             {jsonError && <p className="text-sm text-destructive">{jsonError}</p>}
             <DialogFooter className="pt-6">
               <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
@@ -631,5 +646,3 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     </Dialog>
   );
 }
-
-    

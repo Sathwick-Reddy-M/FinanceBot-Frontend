@@ -14,10 +14,10 @@ export interface BillingCycleTransaction {
   category: string;
 }
 
-export interface CheckingOrSavingsAccountFee {
+export interface CheckingOrSavingsAccountFee { // This can be reused for both Checking and Savings
   no_minimum_balance_fee: number;
   monthly_fee: number;
-  atm_fee: number;
+  atm_fee: number; // Renamed from ATM_fee to be consistent
   overdraft_fee: number;
 }
 
@@ -41,35 +41,35 @@ export interface BaseAccount {
 export interface TSInvestmentAccount extends BaseAccount {
   type: 'Investment';
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSHSAAccount extends BaseAccount {
   type: 'HSA';
   average_monthly_contribution: number;
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSTraditionalIRAAccount extends BaseAccount {
   type: 'Traditional IRA';
   uninvested_amount: number;
   average_monthly_contribution: number;
-  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSRothIRAAccount extends BaseAccount {
   type: 'Roth IRA';
   uninvested_amount: number;
   average_monthly_contribution: number;
-  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
+  asset_distribution: AssetDistribution[];
 }
 
 export interface TSRetirement401kAccount extends BaseAccount {
   type: 'Retirement 401k';
   average_monthly_contribution: number;
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
+  asset_distribution: AssetDistribution[];
   employer_match: string;
 }
 
@@ -77,7 +77,7 @@ export interface TSRoth401kAccount extends BaseAccount {
   type: 'Roth 401k';
   average_monthly_contribution: number;
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
+  asset_distribution: AssetDistribution[];
   employer_match: string;
 }
 
@@ -92,15 +92,28 @@ export interface TSCreditCardAccount extends BaseAccount {
   annual_fee: number;
 }
 
-export interface TSCheckingOrSavingsAccount extends BaseAccount {
-  type: 'Checking/Savings';
-  current_amount: number;
-  rewards_summary: string;
-  interest: number;
-  overdraft_protection: string;
-  minimum_balance_requirement: number;
-  fee: CheckingOrSavingsAccountFee;
-  current_billing_cycle_transactions: BillingCycleTransaction[];
+// New TSCheckingAccount
+export interface TSCheckingAccount extends BaseAccount {
+    type: 'Checking';
+    current_amount: number;
+    rewards_summary: string;
+    interest: number;
+    overdraft_protection: string;
+    minimum_balance_requirement: number;
+    fee: CheckingOrSavingsAccountFee;
+    current_billing_cycle_transactions: BillingCycleTransaction[];
+}
+
+// New TSSavingsAccount
+export interface TSSavingsAccount extends BaseAccount {
+    type: 'Savings';
+    current_amount: number;
+    rewards_summary: string;
+    interest: number;
+    overdraft_protection: string;
+    minimum_balance_requirement: number;
+    fee: CheckingOrSavingsAccountFee;
+    current_billing_cycle_transactions: BillingCycleTransaction[];
 }
 
 export interface TSLoanAccount extends BaseAccount {
@@ -154,7 +167,8 @@ export type Account =
   | TSRetirement401kAccount
   | TSRoth401kAccount
   | TSCreditCardAccount
-  | TSCheckingOrSavingsAccount
+  | TSCheckingAccount   // Added
+  | TSSavingsAccount    // Added
   | TSLoanAccount
   | TSPayrollAccount
   | TSOtherAccount;
@@ -168,7 +182,8 @@ export const ACCOUNT_TYPES_ENUM = [
   'Retirement 401k',
   'Roth 401k',
   'Credit Card',
-  'Checking/Savings',
+  'Checking',         // Added
+  'Savings',          // Added
   'Loan',
   'Payroll',
   'Other',
@@ -186,7 +201,8 @@ export const ACCOUNT_TYPE_EMOJIS: Record<AccountType, string> = {
   'Retirement 401k': "🏢",
   'Roth 401k': "🏦",
   'Credit Card': "💳",
-  'Checking/Savings': "💵",
+  'Checking': "💵",    // Updated emoji
+  'Savings': "💰",     // Added emoji
   'Loan': "📄",
   'Payroll': "💼",
   'Other': "🧾",

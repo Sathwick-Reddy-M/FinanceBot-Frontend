@@ -1,11 +1,11 @@
 
 
 
-import type { Account, AccountType, TSInvestmentAccount, TSCreditCardAccount, TSLoanAccount, TSCheckingOrSavingsAccount, TSPayrollAccount, TSHSAAccount, TSTraditionalIRAAccount, TSRothIRAAccount, TSRetirement401kAccount, TSRoth401kAccount, TSOtherAccount, AssetDistribution } from '@/lib/types';
+import type { Account, AccountType, TSInvestmentAccount, TSCreditCardAccount, TSLoanAccount, TSCheckingAccount, TSSavingsAccount, TSPayrollAccount, TSHSAAccount, TSTraditionalIRAAccount, TSRothIRAAccount, TSRetirement401kAccount, TSRoth401kAccount, TSOtherAccount, AssetDistribution } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit3, Trash2, TrendingUp, Landmark, Briefcase, CreditCardIcon, Layers, ShieldCheck, PiggyBank, Building2, FileText, FileSpreadsheet, DollarSign } from 'lucide-react';
+import { Edit3, Trash2, TrendingUp, Landmark, Briefcase, CreditCardIcon, Layers, ShieldCheck, PiggyBank, Building2, FileText, FileSpreadsheet, WalletCards, Banknote } from 'lucide-react'; // Added WalletCards, Banknote
 import { Progress } from '@/components/ui/progress';
 
 interface AccountCardProps {
@@ -22,7 +22,8 @@ const AccountTypeVisuals: Record<AccountType, { icon: React.ElementType, emoji: 
   'Retirement 401k': { icon: Briefcase, emoji: "🏢" },
   'Roth 401k': { icon: Building2, emoji: "🏦" },
   'Credit Card': { icon: CreditCardIcon, emoji: "💳" },
-  'Checking/Savings': { icon: Landmark, emoji: "💵" },
+  'Checking': { icon: WalletCards, emoji: "💵" }, // Updated
+  'Savings': { icon: Banknote, emoji: "💰" },   // Updated
   'Loan': { icon: FileText, emoji: "📄" },
   'Payroll': { icon: FileSpreadsheet, emoji: "💼" },
   'Other': { icon: Layers, emoji: "🧾" },
@@ -138,8 +139,9 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
           </>
         );
       }
-      case 'Checking/Savings': {
-        const csAcc = account as TSCheckingOrSavingsAccount;
+      case 'Checking':
+      case 'Savings': {
+        const csAcc = account as TSCheckingAccount | TSSavingsAccount; // Use combined type for shared fields
         return (
           <>
             <p className="text-sm">Interest Rate: {csAcc.interest}% APY</p>
@@ -149,9 +151,6 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
       }
       case 'Loan': {
         const loanAcc = account as TSLoanAccount;
-        // For loans, principal_left is negative, outstanding_balance could be used for original amount if defined
-        // For progress, let's assume total_paid relative to an original amount implied by principal_left + total_paid
-        // This is a simplification; a true original loan amount would be better.
         const impliedOriginalAmount = Math.abs(loanAcc.principal_left) + loanAcc.total_paid;
         const loanPaidPercentage = impliedOriginalAmount > 0 ? (loanAcc.total_paid / impliedOriginalAmount) * 100 : 0;
         
@@ -193,6 +192,8 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
         );
        }
       default:
+        // This should be unreachable if all types are handled
+        const exhaustiveCheck: never = account.type;
         return null;
     }
   };

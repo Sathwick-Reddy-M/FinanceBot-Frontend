@@ -32,7 +32,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import type { Account, AccountType, AssetDistribution, BillingCycleTransaction, CheckingOrSavingsAccountFee, LoanFee } from '@/lib/types';
+import type { Account, AccountType, AssetDistribution, BillingCycleTransaction, CheckingOrSavingsAccountFee, LoanFee, TSCheckingAccount, TSCreditCardAccount, TSHSAAccount, TSInvestmentAccount, TSLoanAccount, TSOtherAccount, TSPayrollAccount, TSRetirement401kAccount, TSRoth401kAccount, TSRothIRAAccount, TSSavingsAccount, TSTraditionalIRAAccount } from '@/lib/types';
 import { ACCOUNT_TYPES_ENUM as ACCOUNT_TYPES } from '@/lib/types';
 import { useAccounts } from '@/contexts/AccountContext';
 import { PlusCircle, MinusCircle } from 'lucide-react';
@@ -58,7 +58,7 @@ const billingCycleTransactionSchema = z.object({
 const checkingOrSavingsAccountFeeSchema = z.object({
   no_minimum_balance_fee: z.coerce.number({ required_error: "No minimum balance fee is required" }),
   monthly_fee: z.coerce.number({ required_error: "Monthly fee is required" }),
-  atm_fee: z.coerce.number({ required_error: "ATM fee is required" }), // Renamed from ATM_fee
+  ATM_fee: z.coerce.number({ required_error: "ATM fee is required" }), // Corrected from atm_fee
   overdraft_fee: z.coerce.number({ required_error: "Overdraft fee is required" }),
 });
 
@@ -197,8 +197,8 @@ const accountFormSchema = z.discriminatedUnion("type", [
   tsRetirement401kAccountSchema,
   tsRoth401kAccountSchema,
   tsCreditCardAccountSchema,
-  tsCheckingAccountSchema,   // Added
-  tsSavingsAccountSchema,    // Added
+  tsCheckingAccountSchema,
+  tsSavingsAccountSchema,
   tsLoanAccountSchema,
   tsPayrollAccountSchema,
   tsOtherAccountSchema,
@@ -238,7 +238,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       current_amount: 0,
       overdraft_protection: '',
       minimum_balance_requirement: 0,
-      fee: { no_minimum_balance_fee: 0, monthly_fee: 0, atm_fee: 0, overdraft_fee: 0 },
+      fee: { no_minimum_balance_fee: 0, monthly_fee: 0, ATM_fee: 0, overdraft_fee: 0 },
       principal_left: 0,
       interest_rate: 0,
       monthly_contribution: 0,
@@ -272,17 +272,31 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     };
     if (account) {
       const { balance, ...restOfAccountToEdit } = account; 
+      
+      // Ensure fee object has all properties, especially ATM_fee
+      let feeData = base.fee;
+      if ('fee' in restOfAccountToEdit && (restOfAccountToEdit as TSCheckingAccount | TSSavingsAccount).fee) {
+        const accountFee = (restOfAccountToEdit as TSCheckingAccount | TSSavingsAccount).fee;
+        feeData = {
+          no_minimum_balance_fee: accountFee.no_minimum_balance_fee,
+          monthly_fee: accountFee.monthly_fee,
+          ATM_fee: accountFee.ATM_fee, // Ensure this uses ATM_fee
+          overdraft_fee: accountFee.overdraft_fee,
+        };
+      }
+
       return {
         ...base, 
         id: account.id, 
         type: account.type, 
         ...restOfAccountToEdit, 
+        fee: feeData, // Use the sanitized fee data
         annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0,
         collateral: (account as TSLoanAccount).collateral ?? '',
-        asset_distribution: (account as any).asset_distribution || [],
-        current_billing_cycle_transactions: (account as any).current_billing_cycle_transactions || [],
-        payment_history: (account as any).payment_history || [],
-        other_payments: (account as any).other_payments || [],
+        asset_distribution: (account as TSInvestmentAccount | TSHSAAccount | TSTraditionalIRAAccount | TSRothIRAAccount | TSRetirement401kAccount | TSRoth401kAccount).asset_distribution || [],
+        current_billing_cycle_transactions: (account as TSCreditCardAccount | TSCheckingAccount | TSSavingsAccount).current_billing_cycle_transactions || [],
+        payment_history: (account as TSLoanAccount).payment_history || [],
+        other_payments: (account as TSLoanAccount).other_payments || [],
       } as AccountFormData; 
     }
     return { ...base, type: 'Checking' } as AccountFormData; // Default to Checking
@@ -362,8 +376,8 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             annual_fee: data.annual_fee,
         };
         break;
-      case 'Checking': // Added case
-      case 'Savings':  // Added case
+      case 'Checking':
+      case 'Savings':
         calculatedBalance = data.current_amount;
         specificData = {
             current_amount: data.current_amount,
@@ -371,7 +385,12 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
             interest: data.interest,
             overdraft_protection: data.overdraft_protection,
             minimum_balance_requirement: data.minimum_balance_requirement,
-            fee: data.fee,
+            fee: { // Ensure ATM_fee is correctly named
+              no_minimum_balance_fee: data.fee.no_minimum_balance_fee,
+              monthly_fee: data.fee.monthly_fee,
+              ATM_fee: data.fee.ATM_fee,
+              overdraft_fee: data.fee.overdraft_fee,
+            },
             current_billing_cycle_transactions: data.current_billing_cycle_transactions,
         };
         break;
@@ -418,7 +437,6 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         specificData = { total_income: data.total_income, total_debt: data.total_debt };
         break;
       default:
-        // This part should ideally be unreachable if types are exhaustive
         const exhaustiveCheck: never = data.type; 
         throw new Error(`Invalid account type for data preparation: ${exhaustiveCheck}`);
     }
@@ -528,7 +546,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
     </>
   );
   
-  const renderCheckingOrSavingsFields = () => ( // Combined for Checking and Savings as fields are identical
+  const renderCheckingOrSavingsFields = () => (
     <>
       <FormField control={form.control} name="current_amount" render={({ field }) => ( <FormItem><FormLabel>Current Amount</FormLabel><FormControl><Input type="number" placeholder="5000.00" {...field} /></FormControl><FormMessage /></FormItem> )} />
       <FormField control={form.control} name="interest" render={({ field }) => ( <FormItem><FormLabel>Interest Rate (APY %)</FormLabel><FormControl><Input type="number" placeholder="0.5" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -539,7 +557,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
       <Label className="text-base font-medium mt-3 mb-1 block">Fees</Label>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-3 border rounded-md bg-muted/30">
         <FormField control={form.control} name="fee.monthly_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Monthly Fee</FormLabel><FormControl><Input type="number" placeholder="10" {...field} /></FormControl><FormMessage /></FormItem> )} />
-        <FormField control={form.control} name="fee.atm_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">ATM Fee</FormLabel><FormControl><Input type="number" placeholder="2.50" {...field} /></FormControl><FormMessage /></FormItem> )} />
+        <FormField control={form.control} name="fee.ATM_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">ATM Fee</FormLabel><FormControl><Input type="number" placeholder="2.50" {...field} /></FormControl><FormMessage /></FormItem> )} />
         <FormField control={form.control} name="fee.overdraft_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Overdraft Fee</FormLabel><FormControl><Input type="number" placeholder="35" {...field} /></FormControl><FormMessage /></FormItem> )} />
         <FormField control={form.control} name="fee.no_minimum_balance_fee" render={({ field }) => ( <FormItem><FormLabel className="text-xs">Min. Balance Fee</FormLabel><FormControl><Input type="number" placeholder="12" {...field} /></FormControl><FormMessage /></FormItem> )} />
       </div>

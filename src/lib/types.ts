@@ -17,7 +17,7 @@ export interface BillingCycleTransaction {
 export interface CheckingOrSavingsAccountFee { // This can be reused for both Checking and Savings
   no_minimum_balance_fee: number;
   monthly_fee: number;
-  atm_fee: number; // Renamed from ATM_fee to be consistent
+  ATM_fee: number; // Corrected from atm_fee
   overdraft_fee: number;
 }
 
@@ -41,35 +41,35 @@ export interface BaseAccount {
 export interface TSInvestmentAccount extends BaseAccount {
   type: 'Investment';
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSHSAAccount extends BaseAccount {
   type: 'HSA';
   average_monthly_contribution: number;
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSTraditionalIRAAccount extends BaseAccount {
   type: 'Traditional IRA';
   uninvested_amount: number;
   average_monthly_contribution: number;
-  asset_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSRothIRAAccount extends BaseAccount {
   type: 'Roth IRA';
   uninvested_amount: number;
   average_monthly_contribution: number;
-  asset_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
 }
 
 export interface TSRetirement401kAccount extends BaseAccount {
   type: 'Retirement 401k';
   average_monthly_contribution: number;
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
   employer_match: string;
 }
 
@@ -77,7 +77,7 @@ export interface TSRoth401kAccount extends BaseAccount {
   type: 'Roth 401k';
   average_monthly_contribution: number;
   uninvested_amount: number;
-  asset_distribution: AssetDistribution[];
+  asset_distribution: AssetDistribution[]; // Corrected from assest_distribution
   employer_match: string;
 }
 
@@ -167,8 +167,8 @@ export type Account =
   | TSRetirement401kAccount
   | TSRoth401kAccount
   | TSCreditCardAccount
-  | TSCheckingAccount   // Added
-  | TSSavingsAccount    // Added
+  | TSCheckingAccount
+  | TSSavingsAccount
   | TSLoanAccount
   | TSPayrollAccount
   | TSOtherAccount;
@@ -182,8 +182,8 @@ export const ACCOUNT_TYPES_ENUM = [
   'Retirement 401k',
   'Roth 401k',
   'Credit Card',
-  'Checking',         // Added
-  'Savings',          // Added
+  'Checking',
+  'Savings',
   'Loan',
   'Payroll',
   'Other',
@@ -201,8 +201,8 @@ export const ACCOUNT_TYPE_EMOJIS: Record<AccountType, string> = {
   'Retirement 401k': "🏢",
   'Roth 401k': "🏦",
   'Credit Card': "💳",
-  'Checking': "💵",    // Updated emoji
-  'Savings': "💰",     // Added emoji
+  'Checking': "💵",
+  'Savings': "💰",
   'Loan': "📄",
   'Payroll': "💼",
   'Other': "🧾",

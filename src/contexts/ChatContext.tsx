@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ChatMessage, Account } from '@/lib/types';
 import { useSessionStorageState } from '@/hooks/useSessionStorageState';
 import { submitChatMessageAction } from '@/lib/actions';
-import { SESSION_STORAGE_CHAT_KEY, SESSION_STORAGE_USER_DETAILS_KEY } from '@/lib/constants';
+import { SESSION_STORAGE_CHAT_KEY, SESSION_STORAGE_USER_DETAILS_KEY, SESSION_STORAGE_ACCOUNTS_KEY } from '@/lib/constants';
 import { useAccounts } from './AccountContext'; // To get financial data
 
 interface ChatContextType {
@@ -52,7 +52,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userDetailsString = sessionStorage.getItem(SESSION_STORAGE_USER_DETAILS_KEY);
       const userDetails = userDetailsString ? JSON.parse(userDetailsString) : {};
-      const accountsData = userDetails.accounts || [];
+      const userAccountsString = sessionStorage.getItem(SESSION_STORAGE_ACCOUNTS_KEY);
+      const accountsData = userAccountsString ? JSON.parse(userAccountsString) : [];
+      const chatMessages = sessionStorage.getItem(SESSION_STORAGE_CHAT_KEY);
+      const chatMessagesData = chatMessages ? JSON.parse(chatMessages) : [];
 
       const response = await fetch('http://localhost:5000/chat', {
         method: 'POST',
@@ -63,6 +66,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           query: text,
           user_details: userDetails,
           accounts: accountsData,
+          chatMessages: chatMessagesData,
         }),
       });
 

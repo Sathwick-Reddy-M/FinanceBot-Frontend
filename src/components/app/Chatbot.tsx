@@ -49,7 +49,7 @@ export function Chatbot() {
   };
 
   return (
-    <Card className="shadow-xl flex flex-col max-h-[600px] w-full mx-auto border border-border/70"> {/* Adjusted height constraints */}
+    <Card className="shadow-xl flex flex-col w-full mx-auto border border-border/70">
       <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-6 w-6 text-primary" />
@@ -60,7 +60,7 @@ export function Chatbot() {
         </Button>
       </CardHeader>
       <CardContent className="flex-grow p-0">
-        <ScrollArea className="h-full" viewportRef={viewportRef}>
+        <ScrollArea className="flex-grow" viewportRef={viewportRef}>
           <div className="p-4 space-y-2">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground pt-8 flex flex-col items-center">

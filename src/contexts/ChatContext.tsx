@@ -63,7 +63,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: text,
           user_details: userDetails,
           accounts: accountsData,
           chatMessages: chatMessagesData,

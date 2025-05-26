@@ -59,6 +59,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
       const response = await fetch('https://financebot-backend-yf9z.onrender.com/chat', {
         method: 'POST',
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },

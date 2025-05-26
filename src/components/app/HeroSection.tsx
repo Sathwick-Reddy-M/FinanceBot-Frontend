@@ -13,7 +13,7 @@ export function HeroSection() {
           Take Control of Your Finances, <span className="text-primary">Effortlessly</span>.
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
-          FinView helps you understand your spending, track investments, and reach
+          Finance Planner helps you understand your spending, track investments, and reach
           your financial goals with an AI-powered assistant.
         </p>
         {/* Buttons removed as per request */}
@@ -62,3 +62,4 @@ export function HeroSection() {
     </section>
   );
 }
+

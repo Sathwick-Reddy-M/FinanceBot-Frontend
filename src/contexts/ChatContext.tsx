@@ -57,7 +57,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       const chatMessages = sessionStorage.getItem(SESSION_STORAGE_CHAT_KEY);
       const chatMessagesData = chatMessages ? JSON.parse(chatMessages) : [];
 
-      const response = await fetch('http://localhost:5000/chat', {
+      const response = await fetch('https://financebot-backend-yf9z.onrender.com/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

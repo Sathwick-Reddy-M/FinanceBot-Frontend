@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ChatMessage, Account } from '@/lib/types';
 import { useSessionStorageState } from '@/hooks/useSessionStorageState';
-import { submitChatMessageAction } from '@/lib/actions';
 import { SESSION_STORAGE_CHAT_KEY, SESSION_STORAGE_USER_DETAILS_KEY, SESSION_STORAGE_ACCOUNTS_KEY } from '@/lib/constants';
 import { useAccounts } from './AccountContext'; // To get financial data
 

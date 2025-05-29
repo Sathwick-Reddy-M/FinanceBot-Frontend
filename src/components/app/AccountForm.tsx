@@ -437,8 +437,7 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         specificData = { total_income: data.total_income, total_debt: data.total_debt };
         break;
       default:
-        const exhaustiveCheck: never = data.type; 
-        throw new Error(`Invalid account type for data preparation: ${exhaustiveCheck}`);
+        throw new Error(`Invalid account type for data preparation`);
     }
     return { ...baseData, balance: calculatedBalance, ...specificData } as Account;
   };

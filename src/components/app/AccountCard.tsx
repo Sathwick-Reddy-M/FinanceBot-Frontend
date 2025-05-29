@@ -193,7 +193,6 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
        }
       default:
         // This should be unreachable if all types are handled
-        const exhaustiveCheck: never = account.type;
         return null;
     }
   };

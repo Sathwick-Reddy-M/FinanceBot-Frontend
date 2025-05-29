@@ -285,19 +285,36 @@ export function AccountForm({ isOpen, onOpenChange, accountToEdit }: AccountForm
         };
       }
 
-      return {
-        ...base, 
-        id: account.id, 
-        type: account.type, 
-        ...restOfAccountToEdit, 
-        fee: feeData, // Use the sanitized fee data
-        annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0,
-        collateral: (account as TSLoanAccount).collateral ?? '',
-        asset_distribution: (account as TSInvestmentAccount | TSHSAAccount | TSTraditionalIRAAccount | TSRothIRAAccount | TSRetirement401kAccount | TSRoth401kAccount).asset_distribution || [],
-        current_billing_cycle_transactions: (account as TSCreditCardAccount | TSCheckingAccount | TSSavingsAccount).current_billing_cycle_transactions || [],
-        payment_history: (account as TSLoanAccount).payment_history || [],
-        other_payments: (account as TSLoanAccount).other_payments || [],
-      } as AccountFormData; 
+      switch (account.type) {
+        case "Checking":
+        case "Savings":
+          return {
+            ...base,
+            ...restOfAccountToEdit,
+            type: account.type,
+            fee: feeData,
+            // ...other Checking/Savings properties
+          } as AccountFormData;
+        case "Credit Card":
+          return {
+            ...base,
+            ...restOfAccountToEdit,
+            type: account.type,
+            annual_fee: (account as TSCreditCardAccount).annual_fee ?? 0,
+            // ...other Credit Card properties
+          } as AccountFormData;
+        // handle other account types...
+        case "Other":
+          return {
+            ...base,
+            ...restOfAccountToEdit,
+            type: account.type,
+            // only total_income and total_debt here
+          } as AccountFormData;
+        default:
+          // fallback
+          return { ...base, type: account.type } as AccountFormData;
+      }     
     }
     return { ...base, type: 'Checking' } as AccountFormData; // Default to Checking
   };

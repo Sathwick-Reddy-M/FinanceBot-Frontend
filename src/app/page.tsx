@@ -6,6 +6,7 @@ import { Chatbot } from '@/components/app/Chatbot';
 import { HeroSection } from '@/components/app/HeroSection';
 import { UserDetailsSection } from '@/components/app/UserDetailsSection';
 import { Button } from '@/components/ui/button';
+import { ClipboardPaste } from 'lucide-react'; // Added for icon
 
 const testUserData = {
   name: 'John Doe',
@@ -716,6 +717,12 @@ export default function HomePage() {
       <Header />
       <HeroSection />
       <main id="dashboard" className="flex-grow container mx-auto px-4 py-12 md:py-16">
+        <div className="flex justify-end mb-8">
+          <Button variant="outline" onClick={handleLoadTestData}>
+            <ClipboardPaste className="mr-2 h-4 w-4" />
+            Load Test Data
+          </Button>
+        </div>
         <UserDetailsSection />
         {/* Removed grid layout, stacking AccountDashboard and Chatbot vertically */}
         <div className="mt-8"> {/* Spacing for UserDetailsSection */}
@@ -724,10 +731,8 @@ export default function HomePage() {
         <div id="ai-chat" className="mt-12 w-full"> {/* Added mt-12 for spacing and ensured full width */}
           <Chatbot />
         </div>
-        <div className="mt-8 text-center">
-          <Button onClick={handleLoadTestData}>Load Test Data</Button>
-        </div>
       </main>
     </div>
   );
 }
+

@@ -3,8 +3,9 @@
 
 import type { ChatMessage } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Removed AvatarImage as it's not used
 import { User, Bot, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -13,7 +14,7 @@ interface ChatMessageBubbleProps {
 export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
   const isUser = message.sender === 'user';
   const avatarIcon = isUser ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />;
-  const avatarFallback = isUser ? 'U' : 'B';
+  // const avatarFallback = isUser ? 'U' : 'B'; // Not strictly needed if using icons
 
   return (
     <div
@@ -34,7 +35,7 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
       </Avatar>
       <div
         className={cn(
-          'p-3 rounded-lg shadow-md',
+          'p-3 rounded-lg shadow-md prose prose-sm dark:prose-invert max-w-full', // Added prose classes for markdown styling
           isUser ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card text-card-foreground rounded-bl-none border'
         )}
       >
@@ -44,7 +45,17 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
             <span>{message.text}</span>
           </div>
         ) : (
-          <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+          // Using ReactMarkdown to render the text.
+          // The 'prose' classes help style the markdown output.
+          // You might need to install @tailwindcss/typography if not already.
+          <ReactMarkdown
+            components={{
+              // Ensure links open in a new tab
+              a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" />
+            }}
+          >
+            {message.text}
+          </ReactMarkdown>
         )}
         <p
           className={cn(

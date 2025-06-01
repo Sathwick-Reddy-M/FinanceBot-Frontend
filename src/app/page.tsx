@@ -9,13 +9,13 @@ import { Button } from '@/components/ui/button';
 import { ClipboardPaste } from 'lucide-react'; // Added for icon
 
 const testUserData = {
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  age: 30,
-  occupation: 'Software Engineer',
-  income: 80000,
-  riskTolerance: 'medium',
-  investmentGoals: 'retirement',
+  "name": "Jhon Doe",
+  "age": 25,
+  "state": "California",
+  "country": "USA",
+  "citizen_of": "USA",
+  "tax_filing_status": "Single",
+  "is_tax_resident": true
 };
 
 const testAccountData = [

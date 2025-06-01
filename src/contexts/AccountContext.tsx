@@ -18,8 +18,10 @@ interface AccountContextType {
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
+const EMPTY_ACCOUNTS: Account[] = []; // Define stable initial value
+
 export const AccountProvider = ({ children }: { children: ReactNode }) => {
-  const [accounts, setAccounts] = useSessionStorageState<Account[]>(SESSION_STORAGE_ACCOUNTS_KEY, []);
+  const [accounts, setAccounts] = useSessionStorageState<Account[]>(SESSION_STORAGE_ACCOUNTS_KEY, EMPTY_ACCOUNTS);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -84,3 +86,4 @@ export const useAccounts = () => {
   }
   return context;
 };
+

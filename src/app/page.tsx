@@ -307,6 +307,11 @@ export default function HomePage() {
           <Chatbot />
         </div>
       </main>
+      <footer className="w-full text-center py-4 text-sm text-gray-500">
+        <div className="container mx-auto px-4">
+          This app is deployed on the free version of Render with 512 MB RAM, so it might go out of memory for longer conversations. You can reset the chat history by clicking the delete icon.
+        </div>
+      </footer>
     </div>
   );
 }

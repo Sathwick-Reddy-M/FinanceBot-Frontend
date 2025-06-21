@@ -207,7 +207,10 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
               <CardTitle className="text-lg leading-tight">
                 {account.name}
               </CardTitle>
-              <CardDescription className="text-xs">{account.type} Account</CardDescription>
+              <CardDescription className="text-xs">
+                {account.type} Account
+                <br />Account ID: {account.id}
+              </CardDescription>
             </div>
           </div>
           <Badge variant={account.balance >= 0 ? "secondary" : "destructive"} className="whitespace-nowrap text-sm px-2.5 py-1">

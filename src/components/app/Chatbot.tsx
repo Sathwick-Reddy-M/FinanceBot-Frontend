@@ -67,7 +67,7 @@ export function Chatbot() {
                 <MessageCircle className="h-12 w-12 text-primary/50 mb-4" />
                 <p className="font-medium">Ask me anything about your finances!</p>
                 <p className="text-sm">
-                  E.g., "Can I afford a new car?" or "Summarize my investments."
+                  E.g., "Suggest me better credit cards based on my spending" or "Summarize my investments."
                 </p>
                 {/* Reserve space for the conditional message to stabilize layout */}
                 <div className="h-6 mt-2"> {/* Approx height of a 'text-sm' line + 'mt-2' */}
